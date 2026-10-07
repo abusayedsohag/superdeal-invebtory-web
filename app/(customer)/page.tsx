@@ -1,4 +1,5 @@
 import Link from "next/link";
+import HeroSlider from "@/components/customer/HeroSlider";
 import { 
   ShoppingBag, 
   ArrowRight, 
@@ -395,48 +396,8 @@ const customerReviews = [
 export default function CustomerHomePage() {
   return (
     <div className="space-y-16 pb-16">
-      {/* 1. HERO BANNER */}
-      <section className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white py-16 px-4">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-          <div className="space-y-6">
-            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/20 text-primary border border-primary/30 text-xs font-bold uppercase tracking-wider">
-              <Sparkles className="w-4 h-4" /> {heroBanners[0].tag}
-            </span>
-            <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-tight">
-              Unbeatable Deals On Everything You <span className="text-primary">Love</span>
-            </h1>
-            <p className="text-slate-300 text-base md:text-lg leading-relaxed">
-              {heroBanners[0].desc}
-            </p>
-            <div className="flex flex-wrap items-center gap-4 pt-2">
-              <Link href="/products" className="btn btn-primary btn-lg shadow-lg shadow-primary/30 gap-2">
-                <ShoppingBag className="w-5 h-5" /> {heroBanners[0].buttonText}
-              </Link>
-              <Link href="/categories" className="btn btn-outline btn-lg text-white border-white/40 hover:bg-white hover:text-slate-900 gap-2">
-                Browse Categories <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-          </div>
-          <div className="relative flex justify-center">
-            <div className="relative w-full max-w-lg aspect-4/3 rounded-3xl overflow-hidden shadow-2xl border-4 border-white/10">
-              <img 
-                src={heroBanners[0].image} 
-                alt="Hero Promo"
-                className="w-full h-full object-cover" 
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-transparent flex items-end p-6">
-                <div className="bg-base-100/90 backdrop-blur-md p-4 rounded-2xl text-slate-900 flex items-center justify-between w-full shadow-lg">
-                  <div>
-                    <p className="text-xs font-bold text-primary uppercase">Limited Time Offer</p>
-                    <p className="text-lg font-black">{heroBanners[0].title}</p>
-                  </div>
-                  <span className="badge badge-error badge-lg font-extrabold text-white">UP TO 60% OFF</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* 1. HERO SLIDER BANNER */}
+      <HeroSlider />
 
       {/* Trust Badges Bar */}
       <div className="max-w-7xl mx-auto px-4">
