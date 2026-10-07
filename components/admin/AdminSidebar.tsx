@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import {
   LayoutDashboard,
   Package,
+  Grid,
   Boxes,
   ShoppingBag,
   Truck,
@@ -28,6 +29,7 @@ function SidebarLinks() {
   const menuItems = [
     { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
     { label: "Products", href: "/admin/products", icon: Package, badge: "142" },
+    { label: "Categories", href: "/admin/categories", icon: Grid, badge: "18" },
     { label: "Inventory", href: "/admin/inventory", icon: Boxes, badge: "Low: 4", badgeColor: "badge-error" },
     { label: "Purchases", href: "/admin/purchases", icon: ShoppingBag },
     { label: "Suppliers", href: "/admin/suppliers", icon: Truck },
