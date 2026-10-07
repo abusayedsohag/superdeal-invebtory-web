@@ -14,7 +14,7 @@ const singleBanners = [
     badgeColor: "bg-red-500 text-white",
     bgGradient: "from-red-950 via-rose-900 to-slate-950",
     bgImage: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1400&auto=format&fit=crop&q=80",
-    buttonText: "Claim Flash Deals",
+    buttonText: "Claim Deals",
     buttonIcon: Zap,
     link: "/products"
   },
@@ -27,7 +27,7 @@ const singleBanners = [
     badgeColor: "bg-amber-500 text-slate-950 font-black",
     bgGradient: "from-amber-950 via-slate-900 to-indigo-950",
     bgImage: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=1400&auto=format&fit=crop&q=80",
-    buttonText: "Shop Best Deals",
+    buttonText: "Shop Deals",
     buttonIcon: Flame,
     link: "/products"
   },
@@ -40,7 +40,7 @@ const singleBanners = [
     badgeColor: "bg-emerald-500 text-white",
     bgGradient: "from-emerald-950 via-slate-900 to-teal-950",
     bgImage: "https://images.unsplash.com/photo-1445205170230-053b83016050?w=1400&auto=format&fit=crop&q=80",
-    buttonText: "Use Coupon Now",
+    buttonText: "Use Coupon",
     buttonIcon: Ticket,
     link: "/products"
   },
@@ -53,7 +53,7 @@ const singleBanners = [
     badgeColor: "bg-indigo-500 text-white",
     bgGradient: "from-indigo-950 via-slate-950 to-purple-950",
     bgImage: "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=1400&auto=format&fit=crop&q=80",
-    buttonText: "View New Stock",
+    buttonText: "View Stock",
     buttonIcon: ShoppingBag,
     link: "/products"
   }
@@ -82,9 +82,9 @@ export default function HeroSlider() {
   const ButtonIcon = active.buttonIcon;
 
   return (
-    <section className="relative w-full max-w-7xl mx-auto px-4 pt-6">
+    <section className="relative w-full max-w-7xl mx-auto px-2 sm:px-4 pt-3 sm:pt-6">
       {/* Single Full-Width Banner Container */}
-      <div className="relative w-full min-h-[360px] md:min-h-[440px] rounded-3xl overflow-hidden shadow-2xl border border-base-300 flex items-center">
+      <div className="relative w-full min-h-[300px] sm:min-h-[360px] md:min-h-[440px] rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl border border-base-300 flex items-center">
         {/* Background Image with Overlay */}
         <div className="absolute inset-0 z-0">
           <img
@@ -98,16 +98,16 @@ export default function HeroSlider() {
         </div>
 
         {/* Content Overlay */}
-        <div key={active.id} className="relative z-10 p-6 md:p-12 max-w-2xl text-white space-y-4 animate-fadeIn">
-          <span className={`inline-block px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${active.badgeColor}`}>
+        <div key={active.id} className="relative z-10 p-4 sm:p-6 md:p-12 max-w-2xl text-white space-y-2 sm:space-y-4 animate-fadeIn">
+          <span className={`inline-block px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider ${active.badgeColor}`}>
             {active.badge}
           </span>
 
-          <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight">
+          <h1 className="text-xl sm:text-3xl md:text-5xl font-black tracking-tight leading-tight">
             {active.title}
           </h1>
 
-          <p className="text-lg md:text-xl font-bold text-amber-300">
+          <p className="text-xs sm:text-lg md:text-xl font-bold text-amber-300">
             {active.subtitle}
           </p>
 
@@ -115,11 +115,11 @@ export default function HeroSlider() {
             {active.desc}
           </p>
 
-          <div className="flex items-center gap-3 pt-2">
-            <Link href={active.link} className="btn btn-primary btn-md md:btn-lg rounded-2xl font-black gap-2 shadow-lg shadow-primary/30">
-              <ButtonIcon className="w-5 h-5" /> {active.buttonText}
+          <div className="flex items-center gap-2 sm:gap-3 pt-1 sm:pt-2">
+            <Link href={active.link} className="btn btn-primary btn-xs sm:btn-md md:btn-lg rounded-xl sm:rounded-2xl font-black gap-1.5 sm:gap-2 shadow-lg shadow-primary/30 text-xs sm:text-base">
+              <ButtonIcon className="w-3.5 h-3.5 sm:w-5 sm:h-5" /> {active.buttonText}
             </Link>
-            <Link href="/categories" className="btn btn-outline btn-md md:btn-lg border-white/40 text-white hover:bg-white hover:text-slate-900 rounded-2xl gap-1 hidden sm:flex">
+            <Link href="/categories" className="btn btn-outline btn-xs sm:btn-md md:btn-lg border-white/40 text-white hover:bg-white hover:text-slate-900 rounded-xl sm:rounded-2xl gap-1 hidden sm:flex text-xs sm:text-base">
               Explore Store <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -128,29 +128,29 @@ export default function HeroSlider() {
         {/* Left Arrow Button */}
         <button
           onClick={prevSlide}
-          className="btn btn-circle btn-sm md:btn-md bg-black/40 hover:bg-primary border-none text-white absolute left-3 top-1/2 -translate-y-1/2 z-20 backdrop-blur-md"
+          className="btn btn-circle btn-xs sm:btn-sm md:btn-md bg-black/40 hover:bg-primary border-none text-white absolute left-1 sm:left-3 top-1/2 -translate-y-1/2 z-20 backdrop-blur-md"
           aria-label="Previous Banner"
         >
-          <ChevronLeft className="w-6 h-6" />
+          <ChevronLeft className="w-4 h-4 sm:w-6 sm:h-6" />
         </button>
 
         {/* Right Arrow Button */}
         <button
           onClick={nextSlide}
-          className="btn btn-circle btn-sm md:btn-md bg-black/40 hover:bg-primary border-none text-white absolute right-3 top-1/2 -translate-y-1/2 z-20 backdrop-blur-md"
+          className="btn btn-circle btn-xs sm:btn-sm md:btn-md bg-black/40 hover:bg-primary border-none text-white absolute right-1 sm:right-3 top-1/2 -translate-y-1/2 z-20 backdrop-blur-md"
           aria-label="Next Banner"
         >
-          <ChevronRight className="w-6 h-6" />
+          <ChevronRight className="w-4 h-4 sm:w-6 sm:h-6" />
         </button>
 
         {/* Indicator Dots at bottom */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20">
+        <div className="absolute bottom-2 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20">
           {singleBanners.map((_, idx) => (
             <button
               key={idx}
               onClick={() => setCurrentSlide(idx)}
-              className={`h-2.5 rounded-full transition-all ${
-                currentSlide === idx ? "w-8 bg-primary" : "w-2.5 bg-white/40 hover:bg-white/70"
+              className={`h-2 sm:h-2.5 rounded-full transition-all ${
+                currentSlide === idx ? "w-6 sm:w-8 bg-primary" : "w-2 sm:w-2.5 bg-white/40 hover:bg-white/70"
               }`}
               aria-label={`Go to slide ${idx + 1}`}
             />

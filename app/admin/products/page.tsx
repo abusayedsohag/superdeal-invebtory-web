@@ -1,15 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Search, Filter, Edit, Trash2, Eye, Package, ArrowUpDown } from "lucide-react";
+import Link from "next/link";
+import { Plus, Search, Filter, Edit, Trash2, Eye, Package, Layers } from "lucide-react";
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState([
-    { id: "1", sku: "SD-HEAD-9081", name: "Wireless Noise-Canceling Headphones", category: "Electronics", costPrice: 120.00, price: 199.99, stock: 18, status: "Active" },
-    { id: "2", sku: "SD-WTC-7721", name: "Ultra Smart Watch Series 7 Pro", category: "Gadgets", costPrice: 90.00, price: 149.00, stock: 25, status: "Active" },
-    { id: "3", sku: "SD-KEY-1022", name: "Ergonomic Mechanical Gaming Keyboard", category: "Accessories", costPrice: 50.00, price: 89.99, stock: 4, status: "Low Stock" },
-    { id: "4", sku: "SD-BAG-5510", name: "Premium Leather Everyday Backpack", category: "Fashion", costPrice: 40.00, price: 75.50, stock: 30, status: "Active" },
-    { id: "5", sku: "SD-MOU-2201", name: "Minimalist Wireless Optical Mouse", category: "Electronics", costPrice: 15.00, price: 29.99, stock: 0, status: "Out of Stock" }
+    { id: "1", sku: "SD-HEAD-9081", name: "Wireless Noise-Canceling Headphones", category: "Electronics", costPrice: 120.00, price: 199.99, stock: 18, variantsCount: 3, status: "Active" },
+    { id: "2", sku: "SD-WTC-7721", name: "Ultra Smart Watch Series 7 Pro", category: "Gadgets", costPrice: 90.00, price: 149.00, stock: 25, variantsCount: 4, status: "Active" },
+    { id: "3", sku: "SD-KEY-1022", name: "Ergonomic Mechanical Gaming Keyboard", category: "Accessories", costPrice: 50.00, price: 89.99, stock: 4, variantsCount: 2, status: "Low Stock" },
+    { id: "4", sku: "TSH-PREM-2026", name: "Premium Cotton Crewneck T-Shirt", category: "Fashion", costPrice: 55.00, price: 85.00, stock: 145, variantsCount: 12, status: "Active" },
+    { id: "5", sku: "SD-MOU-2201", name: "Minimalist Wireless Optical Mouse", category: "Electronics", costPrice: 15.00, price: 29.99, stock: 0, variantsCount: 1, status: "Out of Stock" }
   ]);
 
   return (
@@ -17,12 +18,12 @@ export default function AdminProductsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-slate-900">Products Catalog</h1>
-          <p className="text-xs text-slate-500">Manage store items, pricing, SKU and catalog statuses</p>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900">Products Catalog</h1>
+          <p className="text-xs text-slate-500">Manage store items, pricing, SKU, variants, and stock metrics</p>
         </div>
-        <button className="btn btn-primary btn-sm gap-2 font-bold shadow-md shadow-primary/20">
+        <Link href="/admin/products/new" className="btn btn-primary btn-sm gap-2 font-bold shadow-md shadow-primary/20">
           <Plus className="w-4 h-4" /> Add New Product
-        </button>
+        </Link>
       </div>
 
       {/* Search & Filters */}
@@ -57,11 +58,12 @@ export default function AdminProductsPage() {
         <table className="table w-full text-sm">
           <thead>
             <tr className="text-xs text-slate-500 uppercase bg-slate-50/50 border-b border-slate-200">
-              <th>SKU</th>
+              <th>Master SKU</th>
               <th>Product Name</th>
               <th>Category</th>
               <th>Cost Price</th>
               <th>Selling Price</th>
+              <th>Variants</th>
               <th>Stock Qty</th>
               <th>Status</th>
               <th className="text-right">Actions</th>
@@ -75,6 +77,11 @@ export default function AdminProductsPage() {
                 <td className="text-xs text-slate-600">{p.category}</td>
                 <td className="text-slate-500">\${p.costPrice.toFixed(2)}</td>
                 <td className="font-extrabold text-slate-900">\${p.price.toFixed(2)}</td>
+                <td>
+                  <span className="badge badge-indigo badge-outline text-[11px] font-bold gap-1">
+                    <Layers className="w-3 h-3 text-indigo-600" /> {p.variantsCount} Variants
+                  </span>
+                </td>
                 <td>
                   <span className={`font-bold ${p.stock <= 5 ? "text-error" : "text-slate-800"}`}>
                     {p.stock} units
@@ -90,8 +97,12 @@ export default function AdminProductsPage() {
                 </td>
                 <td className="text-right">
                   <div className="flex items-center justify-end gap-1">
-                    <button className="btn btn-ghost btn-xs text-slate-600 hover:text-primary"><Edit className="w-3.5 h-3.5" /></button>
-                    <button className="btn btn-ghost btn-xs text-slate-600 hover:text-error"><Trash2 className="w-3.5 h-3.5" /></button>
+                    <Link href="/admin/products/new" className="btn btn-ghost btn-xs text-slate-600 hover:text-primary">
+                      <Edit className="w-3.5 h-3.5" />
+                    </Link>
+                    <button className="btn btn-ghost btn-xs text-slate-600 hover:text-error">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </td>
               </tr>

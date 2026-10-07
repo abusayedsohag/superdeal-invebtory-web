@@ -400,34 +400,34 @@ export default function CustomerHomePage() {
       <HeroSlider />
 
       {/* Trust Badges Bar */}
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-base-100 rounded-3xl border border-base-200 shadow-xs">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-primary/10 text-primary rounded-2xl"><Truck className="w-6 h-6" /></div>
+      <div className="max-w-7xl mx-auto px-2 sm:px-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 p-4 sm:p-6 bg-base-100 rounded-2xl sm:rounded-3xl border border-base-200 shadow-xs">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="p-2.5 sm:p-3 bg-primary/10 text-primary rounded-xl sm:rounded-2xl shrink-0"><Truck className="w-5 h-5 sm:w-6 sm:h-6" /></div>
             <div>
-              <h4 className="font-bold text-sm">Free Express Delivery</h4>
-              <p className="text-xs text-base-content/60">On orders over \$50</p>
+              <h4 className="font-bold text-xs sm:text-sm">Free Express Delivery</h4>
+              <p className="text-[11px] sm:text-xs text-base-content/60">On orders over \$50</p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-secondary/10 text-secondary rounded-2xl"><RotateCcw className="w-6 h-6" /></div>
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="p-2.5 sm:p-3 bg-secondary/10 text-secondary rounded-xl sm:rounded-2xl shrink-0"><RotateCcw className="w-5 h-5 sm:w-6 sm:h-6" /></div>
             <div>
-              <h4 className="font-bold text-sm">30-Day Easy Return</h4>
-              <p className="text-xs text-base-content/60">Money-back guarantee</p>
+              <h4 className="font-bold text-xs sm:text-sm">30-Day Easy Return</h4>
+              <p className="text-[11px] sm:text-xs text-base-content/60">Money-back guarantee</p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-accent/10 text-accent rounded-2xl"><ShieldCheck className="w-6 h-6" /></div>
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="p-2.5 sm:p-3 bg-accent/10 text-accent rounded-xl sm:rounded-2xl shrink-0"><ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6" /></div>
             <div>
-              <h4 className="font-bold text-sm">100% Secure Payment</h4>
-              <p className="text-xs text-base-content/60">Encrypted checkout</p>
+              <h4 className="font-bold text-xs sm:text-sm">100% Secure Payment</h4>
+              <p className="text-[11px] sm:text-xs text-base-content/60">Encrypted checkout</p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-info/10 text-info rounded-2xl"><Headphones className="w-6 h-6" /></div>
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="p-2.5 sm:p-3 bg-info/10 text-info rounded-xl sm:rounded-2xl shrink-0"><Headphones className="w-5 h-5 sm:w-6 sm:h-6" /></div>
             <div>
-              <h4 className="font-bold text-sm">24/7 Customer Support</h4>
-              <p className="text-xs text-base-content/60">Dedicated assistance</p>
+              <h4 className="font-bold text-xs sm:text-sm">24/7 Customer Support</h4>
+              <p className="text-[11px] sm:text-xs text-base-content/60">Dedicated assistance</p>
             </div>
           </div>
         </div>
