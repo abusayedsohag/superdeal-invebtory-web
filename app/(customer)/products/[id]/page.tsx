@@ -15,6 +15,7 @@ import {
   Check, 
   ThumbsUp 
 } from "lucide-react";
+import ProductRecommendation from "@/components/customer/ProductRecommendation";
 
 export default function ProductDetailPage() {
   const [selectedImage, setSelectedImage] = useState(0);
@@ -301,6 +302,9 @@ export default function ProductDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Smart Product Recommendation Engine */}
+      <ProductRecommendation currentProductTitle="Gaming Mouse" />
     </div>
   );
 }
