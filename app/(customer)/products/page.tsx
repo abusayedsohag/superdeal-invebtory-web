@@ -86,9 +86,34 @@ const allProducts = [
 export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [priceRange, setPriceRange] = useState(250);
+  const [wishlistItems, setWishlistItems] = useState<string[]>(["1", "3", "5"]);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  const toggleWishlist = (id: string, name: string) => {
+    if (wishlistItems.includes(id)) {
+      setWishlistItems(prev => prev.filter(item => item !== id));
+      showToast(`Removed "${name}" from your wishlist.`);
+    } else {
+      setWishlistItems(prev => [...prev, id]);
+      showToast(`❤️ Added "${name}" to your wishlist!`);
+    }
+  };
+
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 3000);
+  };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 py-8 space-y-6 relative">
+      {/* Toast Alert Banner */}
+      {toastMsg && (
+        <div className="fixed top-5 right-5 z-50 bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-3 animate-bounce text-xs font-bold">
+          <Heart className="w-5 h-5 text-rose-500 fill-rose-500" />
+          <span>{toastMsg}</span>
+        </div>
+      )}
+
       {/* Page Title & Breadcrumbs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-base-200 pb-4">
         <div>
@@ -206,8 +231,12 @@ export default function ProductsPage() {
               <div key={product.id} className="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md transition-all group rounded-2xl overflow-hidden">
                 <figure className="relative h-48 bg-base-200">
                   <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                  <button className="btn btn-circle btn-sm bg-base-100/80 hover:bg-base-100 border-none absolute top-3 right-3 text-base-content/70 hover:text-secondary">
-                    <Heart className="w-4 h-4" />
+                  <button 
+                    onClick={() => toggleWishlist(product.id, product.name)}
+                    className="btn btn-circle btn-sm bg-base-100/90 hover:bg-base-100 border-none absolute top-3 right-3 text-rose-500 shadow-sm transition-all"
+                    title={wishlistItems.includes(product.id) ? "Remove from wishlist" : "Add to wishlist"}
+                  >
+                    <Heart className={`w-4 h-4 ${wishlistItems.includes(product.id) ? "fill-rose-500 text-rose-500" : "text-slate-600"}`} />
                   </button>
                   {!product.inStock && (
                     <span className="badge badge-error absolute top-3 left-3 font-bold text-xs">OUT OF STOCK</span>

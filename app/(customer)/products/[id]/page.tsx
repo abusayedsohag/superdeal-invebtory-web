@@ -20,6 +20,15 @@ export default function ProductDetailPage() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState("description");
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  const toggleWishlist = () => {
+    setIsWishlisted(!isWishlisted);
+    const msg = !isWishlisted ? `❤️ Added "${product.name}" to your Wishlist!` : `Removed "${product.name}" from your Wishlist.`;
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 3000);
+  };
 
   const product = {
     id: "1",
@@ -47,7 +56,14 @@ export default function ProductDetailPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 space-y-10">
+    <div className="max-w-7xl mx-auto px-4 py-8 space-y-10 relative">
+      {/* Toast Alert Banner */}
+      {toastMsg && (
+        <div className="fixed top-5 right-5 z-50 bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-3 animate-bounce text-xs font-bold">
+          <Heart className="w-5 h-5 text-rose-500 fill-rose-500" />
+          <span>{toastMsg}</span>
+        </div>
+      )}
       {/* Breadcrumbs */}
       <div className="text-xs breadcrumbs text-base-content/60">
         <ul>
@@ -164,8 +180,12 @@ export default function ProductDetailPage() {
                 </button>
               </div>
 
-              <button className="btn btn-outline btn-circle btn-sm">
-                <Heart className="w-4 h-4 text-secondary" />
+              <button 
+                onClick={toggleWishlist}
+                className={`btn btn-circle btn-sm ${isWishlisted ? "btn-secondary" : "btn-outline"}`}
+                title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+              >
+                <Heart className={`w-4 h-4 ${isWishlisted ? "fill-white text-white" : "text-rose-500"}`} />
               </button>
               <button className="btn btn-outline btn-circle btn-sm">
                 <Share2 className="w-4 h-4" />
