@@ -214,12 +214,21 @@ export default function AdminOrdersPage() {
                   </select>
                 </td>
                 <td className="text-right">
-                  <button 
-                    onClick={() => setSelectedOrder(o)}
-                    className="btn btn-sm btn-primary gap-1 font-bold rounded-xl"
-                  >
-                    <Eye className="w-4 h-4" /> View Order
-                  </button>
+                  <div className="flex items-center justify-end gap-1.5">
+                    <button 
+                      onClick={() => setSelectedOrder(o)}
+                      className="btn btn-xs sm:btn-sm btn-primary gap-1 font-bold rounded-xl"
+                    >
+                      <Eye className="w-3.5 h-3.5" /> View
+                    </button>
+                    <a 
+                      href={`/admin/orders/invoice/${o.id}`}
+                      target="_blank"
+                      className="btn btn-xs sm:btn-sm btn-outline gap-1 font-bold rounded-xl"
+                    >
+                      <FileText className="w-3.5 h-3.5 text-primary" /> Invoice
+                    </a>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -344,9 +353,13 @@ export default function AdminOrdersPage() {
                 </select>
               </div>
 
-              <button className="btn btn-sm btn-outline gap-1 font-bold">
+              <a 
+                href={`/admin/orders/invoice/${selectedOrder.id}`}
+                target="_blank"
+                className="btn btn-sm btn-outline gap-1 font-bold rounded-xl"
+              >
                 <Printer className="w-4 h-4" /> Print Invoice
-              </button>
+              </a>
             </div>
           </div>
         </div>
