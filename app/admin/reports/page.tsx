@@ -7,7 +7,6 @@ import {
   DollarSign, 
   ShoppingCart, 
   Users, 
-  PieChart, 
   Calendar, 
   Download, 
   FileText, 
@@ -18,337 +17,363 @@ import {
   AlertTriangle, 
   Package, 
   CheckCircle2, 
-  SlidersHorizontal,
-  Flame
+  Boxes,
+  Receipt,
+  Printer,
+  FileSpreadsheet,
+  XCircle,
+  Building2,
+  Sparkles,
+  ArrowRight,
+  ShoppingBag,
 } from "lucide-react";
 
 export default function AdminReportsPage() {
-  const [timeframe, setTimeframe] = useState<"daily" | "weekly" | "monthly" | "yearly">("monthly");
+  const [activeCategory, setActiveCategory] = useState<"sales" | "inventory" | "purchases" | "financial" | "customers">("sales");
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
 
-  // Chart datasets based on selected timeframe (Daily, Weekly, Monthly, Yearly)
-  const salesData = {
-    daily: [
-      { label: "06:00", sales: 12400, profit: 4100, orders: 34 },
-      { label: "09:00", sales: 28500, profit: 9800, orders: 78 },
-      { label: "12:00", sales: 45000, profit: 15200, orders: 120 },
-      { label: "15:00", sales: 32000, profit: 10500, orders: 86 },
-      { label: "18:00", sales: 58000, profit: 19600, orders: 154 },
-      { label: "21:00", sales: 39000, profit: 13100, orders: 98 }
-    ],
-    weekly: [
-      { label: "Mon", sales: 110000, profit: 36000, orders: 280 },
-      { label: "Tue", sales: 125000, profit: 42000, orders: 310 },
-      { label: "Wed", sales: 140000, profit: 46000, orders: 360 },
-      { label: "Thu", sales: 135000, profit: 44000, orders: 340 },
-      { label: "Fri", sales: 180000, profit: 61000, orders: 490 },
-      { label: "Sat", sales: 210000, profit: 72000, orders: 580 },
-      { label: "Sun", sales: 195000, profit: 67000, orders: 520 }
-    ],
-    monthly: [
-      { label: "Jan", sales: 850000, profit: 280000, orders: 2400 },
-      { label: "Feb", sales: 920000, profit: 310000, orders: 2650 },
-      { label: "Mar", sales: 1100000, profit: 360000, orders: 3100 },
-      { label: "Apr", sales: 1050000, profit: 340000, orders: 2950 },
-      { label: "May", sales: 1280000, profit: 420000, orders: 3600 },
-      { label: "Jun", sales: 1450000, profit: 480000, orders: 4100 },
-      { label: "Jul", sales: 1600000, profit: 540000, orders: 4500 },
-      { label: "Aug", sales: 1520000, profit: 500000, orders: 4300 },
-      { label: "Sep", sales: 1750000, profit: 580000, orders: 4900 },
-      { label: "Oct", sales: 1980000, profit: 650000, orders: 5400 }
-    ],
-    yearly: [
-      { label: "2023", sales: 8900000, profit: 2900000, orders: 24000 },
-      { label: "2024", sales: 12400000, profit: 4100000, orders: 35000 },
-      { label: "2025", sales: 16800000, profit: 5600000, orders: 48000 },
-      { label: "2026", sales: 21500000, profit: 7200000, orders: 62000 }
-    ]
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 3500);
   };
 
-  const currentDataset = salesData[timeframe];
-  const maxSalesValue = Math.max(...currentDataset.map(d => d.sales));
-
-  // Category Distribution Mock
-  const categoriesDistribution = [
-    { name: "Electronics & Gadgets", percent: 48, count: "6,019 items", color: "bg-primary" },
-    { name: "Fashion & Apparel", percent: 32, count: "4,012 font-bold", color: "bg-purple-600" },
-    { name: "Home & Kitchen", percent: 20, count: "2,509 items", color: "bg-amber-500" }
-  ];
-
-  // Payment Methods Breakdown Mock
-  const paymentMethods = [
-    { method: "Cash on Delivery (COD)", percent: 45, total: "৳8,450,000", color: "bg-emerald-500" },
-    { method: "bKash MFS Gateway", percent: 35, total: "৳6,570,000", color: "bg-pink-600" },
-    { method: "Nagad MFS Gateway", percent: 12, total: "৳2,250,000", color: "bg-orange-600" },
-    { method: "Credit / Debit Cards", percent: 8, total: "৳1,500,000", color: "bg-blue-600" }
-  ];
-
-  // Delivery Status Breakdown Mock
-  const deliveryStatusList = [
-    { status: "Delivered", count: 8430, percent: 67, badge: "badge-success text-white" },
-    { status: "Out for Delivery", count: 1240, percent: 10, badge: "bg-indigo-600 text-white" },
-    { status: "Processing & Packed", count: 2150, percent: 17, badge: "badge-primary" },
-    { status: "Returned / Cancelled", count: 720, percent: 6, badge: "badge-error text-white" }
-  ];
-
-  // Top Selling Products
-  const topSellingProducts = [
-    { name: "Wireless Noise-Canceling Headphones", sold: "3,420 units", revenue: 6669000, stock: 18, image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100&auto=format&fit=crop&q=80" },
-    { name: "Ultra Smart Watch Series 7 Pro", sold: "2,150 units", revenue: 3203500, stock: 45, image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100&auto=format&fit=crop&q=80" },
-    { name: "Ergonomic Mechanical Gaming Keyboard", sold: "1,890 units", revenue: 2833110, stock: 12, image: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=100&auto=format&fit=crop&q=80" },
-    { name: "Minimalist Wireless Optical Mouse", sold: "1,450 units", revenue: 1448550, stock: 2, image: "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=100&auto=format&fit=crop&q=80" }
-  ];
-
-  // Low-Stock Products
-  const lowStockProducts = [
-    { name: "Wireless Mouse", sku: "SD-MSE-901", stock: 2, minStock: 10, category: "Electronics" },
-    { name: "Mechanical Keyboard", sku: "SD-KEY-102", stock: 4, minStock: 15, category: "Accessories" },
-    { name: "USB-C Fast Cable", sku: "SD-CBL-442", stock: 1, minStock: 20, category: "Electronics" }
-  ];
+  // Dynamic CSV Exporter Function
+  const exportCSVReport = (reportTitle: string, rows: string[][]) => {
+    const csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `${reportTitle.toLowerCase().replace(/\s+/g, "_")}_report.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast(`📊 Exported "${reportTitle}" as CSV Spreadsheet!`);
+  };
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-16">
-      {/* Top Title Bar & Export Action */}
+      {/* Toast Alert */}
+      {toastMsg && (
+        <div className="fixed top-5 right-5 z-50 bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-3 animate-bounce text-xs font-bold">
+          <FileSpreadsheet className="w-5 h-5 text-emerald-400" />
+          <span>{toastMsg}</span>
+        </div>
+      )}
+
+      {/* Top Title Bar & Export Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 flex items-center gap-2">
-            <BarChart3 className="w-8 h-8 text-primary" /> Advanced Analytics & Reports
+            <FileText className="w-8 h-8 text-primary" /> Reports & Audit Center
           </h1>
           <p className="text-xs text-slate-500">
-            Real-time multi-dimensional analytics: Sales, Revenue, Profit, Orders, Customers, Categories, Payment methods, Delivery statuses, Top sellers & Low stock
+            Dedicated report modules: Sales, Inventory, Purchase, Financial & Customer reports with instant PDF/CSV Export
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <button 
             onClick={() => window.print()}
+            className="btn btn-outline btn-sm font-bold rounded-xl gap-2"
+          >
+            <Printer className="w-4 h-4 text-primary" /> Print / PDF Export
+          </button>
+          
+          <button 
+            onClick={() => exportCSVReport("SuperDeal_Full_Master", [
+              ["Category", "Metric Name", "Value"],
+              ["Sales", "Daily Sales", "৳125,430"],
+              ["Sales", "Monthly Sales", "৳1,980,000"],
+              ["Inventory", "Total Stock", "18,540 units"],
+              ["Financial", "Net Profit", "৳42,500"],
+              ["Financial", "Supplier Due", "৳40,000"]
+            ])}
             className="btn btn-primary btn-sm font-bold rounded-xl gap-2 shadow-md"
           >
-            <Download className="w-4 h-4" /> Export Analytics Summary
+            <FileSpreadsheet className="w-4 h-4" /> Export CSV Data
           </button>
         </div>
       </div>
 
-      {/* TIMEFRAME SELECTOR TABS (Daily, Weekly, Monthly, Yearly) */}
-      <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-1 font-bold text-xs">
-          <span className="text-slate-400 uppercase text-[10px] tracking-wider px-2">Time Horizon:</span>
-          {(["daily", "weekly", "monthly", "yearly"] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTimeframe(t)}
-              className={`px-4 py-2 rounded-xl transition-all capitalize ${
-                timeframe === t 
-                  ? "bg-primary text-white font-black shadow-md" 
-                  : "text-slate-600 hover:bg-slate-100"
-              }`}
+      {/* 5 MAJOR REPORT CATEGORY NAVIGATION TABS */}
+      <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-2 text-xs font-bold">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <button
+            onClick={() => setActiveCategory("sales")}
+            className={`px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5 ${
+              activeCategory === "sales" ? "bg-primary text-white font-black shadow-md" : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            <TrendingUp className="w-4 h-4" /> 1. Sales Reports
+          </button>
+
+          <button
+            onClick={() => setActiveCategory("inventory")}
+            className={`px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5 ${
+              activeCategory === "inventory" ? "bg-primary text-white font-black shadow-md" : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            <Boxes className="w-4 h-4" /> 2. Inventory Reports
+          </button>
+
+          <button
+            onClick={() => setActiveCategory("purchases")}
+            className={`px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5 ${
+              activeCategory === "purchases" ? "bg-primary text-white font-black shadow-md" : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            <ShoppingBag className="w-4 h-4" /> 3. Purchase Reports
+          </button>
+
+          <button
+            onClick={() => setActiveCategory("financial")}
+            className={`px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5 ${
+              activeCategory === "financial" ? "bg-primary text-white font-black shadow-md" : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            <DollarSign className="w-4 h-4" /> 4. Financial Reports
+          </button>
+
+          <button
+            onClick={() => setActiveCategory("customers")}
+            className={`px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5 ${
+              activeCategory === "customers" ? "bg-primary text-white font-black shadow-md" : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            <Users className="w-4 h-4" /> 5. Customer Reports
+          </button>
+        </div>
+      </div>
+
+      {/* SECTION 1: SALES REPORTS */}
+      {activeCategory === "sales" && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
+              <TrendingUp className="w-6 h-6 text-primary" /> Sales Reports & Performance
+            </h2>
+            <button 
+              onClick={() => exportCSVReport("Sales_Summary", [
+                ["Time Horizon", "Sales Volume (৳)", "Orders Processed"],
+                ["Daily Sales", "125430", "348"],
+                ["Monthly Sales", "1980000", "5400"],
+                ["Yearly Sales", "21500000", "62000"]
+              ])}
+              className="btn btn-xs btn-outline font-bold gap-1 rounded-lg"
             >
-              {t} Analytics
+              <Download className="w-3.5 h-3.5 text-primary" /> Export Sales CSV
             </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
-          <Calendar className="w-4 h-4 text-primary" /> Active Scope: <strong className="text-slate-900 capitalize">{timeframe}</strong>
-        </div>
-      </div>
-
-      {/* MAIN SALES, REVENUE & PROFIT CHART */}
-      <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-          <div>
-            <h3 className="font-black text-xl text-slate-900 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-emerald-600" /> Sales, Revenue & Net Profit Growth Chart
-            </h3>
-            <p className="text-xs text-slate-500">
-              Comparative analysis for {timeframe} performance
-            </p>
           </div>
-          
-          <div className="flex items-center gap-4 text-xs font-bold">
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-full bg-primary inline-block"></span>
-              <span className="text-slate-700">Gross Sales / Revenue</span>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-3">
+              <span className="badge badge-primary font-bold text-[10px] uppercase">1. Daily Sales</span>
+              <h3 className="text-3xl font-black font-mono text-slate-900">৳125,430</h3>
+              <p className="text-xs text-slate-500">348 Orders processed today</p>
+              <div className="pt-2 border-t border-slate-100 flex justify-between text-xs font-bold text-emerald-600">
+                <span>+18.4% vs yesterday</span>
+                <ArrowUpRight className="w-4 h-4" />
+              </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
-              <span className="text-slate-700">Net Profit</span>
+
+            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-3">
+              <span className="badge badge-info text-white font-bold text-[10px] uppercase">2. Monthly Sales</span>
+              <h3 className="text-3xl font-black font-mono text-slate-900">৳1,980,000</h3>
+              <p className="text-xs text-slate-500">5,400 Orders processed this month</p>
+              <div className="pt-2 border-t border-slate-100 flex justify-between text-xs font-bold text-emerald-600">
+                <span>+14.2% vs last month</span>
+                <ArrowUpRight className="w-4 h-4" />
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-3">
+              <span className="badge badge-purple bg-purple-600 text-white font-bold text-[10px] uppercase">3. Yearly Sales</span>
+              <h3 className="text-3xl font-black font-mono text-slate-900">৳21,500,000</h3>
+              <p className="text-xs text-slate-500">62,000 Orders in year 2026</p>
+              <div className="pt-2 border-t border-slate-100 flex justify-between text-xs font-bold text-emerald-600">
+                <span>+28.0% YoY Growth</span>
+                <ArrowUpRight className="w-4 h-4" />
+              </div>
             </div>
           </div>
         </div>
+      )}
 
-        {/* Dynamic Graphic Bar Simulation */}
-        <div className="h-72 flex items-end justify-between gap-3 pt-8 px-4 bg-slate-50 rounded-2xl border border-slate-100">
-          {currentDataset.map((item, idx) => {
-            const salesHeight = (item.sales / maxSalesValue) * 100;
-            const profitHeight = (item.profit / maxSalesValue) * 100;
-
-            return (
-              <div key={idx} className="flex-1 flex flex-col items-center gap-2 group relative">
-                {/* Hover Tooltip */}
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-12 bg-slate-900 text-white text-[10px] font-mono py-1.5 px-3 rounded-xl pointer-events-none shadow-xl z-20 whitespace-nowrap text-center">
-                  <p className="font-extrabold text-amber-300">{item.label} Breakdown</p>
-                  <p>Sales: ৳{item.sales.toLocaleString()} | Profit: ৳{item.profit.toLocaleString()}</p>
-                </div>
-
-                {/* Bars */}
-                <div className="w-full flex items-end justify-center gap-1 h-52">
-                  <div 
-                    className="w-1/2 bg-gradient-to-t from-primary to-indigo-500 rounded-t-lg transition-all group-hover:brightness-110" 
-                    style={{ height: `${salesHeight}%` }}
-                  ></div>
-                  <div 
-                    className="w-1/2 bg-gradient-to-t from-emerald-500 to-teal-400 rounded-t-lg transition-all group-hover:brightness-110" 
-                    style={{ height: `${profitHeight}%` }}
-                  ></div>
-                </div>
-
-                <span className="text-xs font-extrabold text-slate-600">{item.label}</span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* METRICS BREAKDOWN GRID: CATEGORIES, PAYMENT METHODS & DELIVERY STATUS */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* 1. CATEGORIES BREAKDOWN */}
-        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h3 className="font-black text-lg text-slate-900 flex items-center gap-2">
-              <Layers className="w-5 h-5 text-primary" /> Category Distribution
-            </h3>
-            <span className="text-xs font-bold text-slate-400">Share %</span>
+      {/* SECTION 2: INVENTORY REPORTS */}
+      {activeCategory === "inventory" && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
+              <Boxes className="w-6 h-6 text-primary" /> Inventory & Stock Audit Reports
+            </h2>
+            <button 
+              onClick={() => exportCSVReport("Inventory_Audit", [
+                ["Stock Status", "Item Count / Metric"],
+                ["Current Stock", "18540"],
+                ["Low Stock Items", "84"],
+                ["Out of Stock Items", "23"],
+                ["Stock Movement History", "+100 Purchase / -5 Sale / -2 Damage"]
+              ])}
+              className="btn btn-xs btn-outline font-bold gap-1 rounded-lg"
+            >
+              <Download className="w-3.5 h-3.5 text-primary" /> Export Inventory CSV
+            </button>
           </div>
 
-          <div className="space-y-4">
-            {categoriesDistribution.map((cat, i) => (
-              <div key={i} className="space-y-1.5">
-                <div className="flex justify-between text-xs font-bold">
-                  <span className="text-slate-800">{cat.name}</span>
-                  <span className="font-mono text-primary">{cat.percent}%</span>
-                </div>
-                <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                  <div className={`${cat.color} h-2.5 rounded-full`} style={{ width: `${cat.percent}%` }}></div>
-                </div>
-              </div>
-            ))}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs space-y-2">
+              <span className="text-[10px] font-bold text-slate-400 uppercase">Current Stock</span>
+              <h3 className="text-2xl font-black text-slate-900">18,540 Units</h3>
+              <p className="text-[11px] text-slate-500">Valuation: ৳18.5M</p>
+            </div>
+
+            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs space-y-2">
+              <span className="text-[10px] font-bold text-amber-600 uppercase">Low Stock Alerts</span>
+              <h3 className="text-2xl font-black text-amber-600">84 Items</h3>
+              <p className="text-[11px] text-amber-700 font-bold">Below Reorder Level</p>
+            </div>
+
+            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs space-y-2">
+              <span className="text-[10px] font-bold text-red-600 uppercase">Out of Stock</span>
+              <h3 className="text-2xl font-black text-red-600">23 Items</h3>
+              <p className="text-[11px] text-red-700 font-bold">Restock Required</p>
+            </div>
+
+            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs space-y-2">
+              <span className="text-[10px] font-bold text-indigo-600 uppercase">Stock Movement Audit</span>
+              <h3 className="text-sm font-black text-slate-900">+100 Purchase</h3>
+              <p className="text-[11px] text-slate-500">-5 Sale • -2 Damage • +10 Return</p>
+            </div>
           </div>
         </div>
+      )}
 
-        {/* 2. PAYMENT METHODS BREAKDOWN */}
-        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h3 className="font-black text-lg text-slate-900 flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-emerald-600" /> Payment Methods
-            </h3>
-            <span className="text-xs font-bold text-slate-400">Share %</span>
+      {/* SECTION 3: PURCHASE REPORTS */}
+      {activeCategory === "purchases" && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
+              <ShoppingBag className="w-6 h-6 text-primary" /> Supplier Purchase Reports
+            </h2>
+            <button 
+              onClick={() => exportCSVReport("Purchase_Report", [
+                ["Supplier Name", "Total Purchases (৳)", "Paid (৳)", "Due (৳)"],
+                ["ABC Electronics", "2450000", "1950000", "500000"],
+                ["Global Tech Supplies", "1800000", "1800000", "0"],
+                ["Trend Apparel Mills", "950000", "700000", "250000"]
+              ])}
+              className="btn btn-xs btn-outline font-bold gap-1 rounded-lg"
+            >
+              <Download className="w-3.5 h-3.5 text-primary" /> Export Purchase CSV
+            </button>
           </div>
 
-          <div className="space-y-3">
-            {paymentMethods.map((pm, i) => (
-              <div key={i} className="p-3 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
-                <div className="flex justify-between text-xs font-extrabold">
-                  <span className="text-slate-900">{pm.method}</span>
-                  <span className="font-mono text-emerald-600">{pm.percent}%</span>
-                </div>
-                <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                  <div className={`${pm.color} h-2 rounded-full`} style={{ width: `${pm.percent}%` }}></div>
-                </div>
-                <p className="text-[10px] text-slate-400 font-mono text-right pt-0.5">Total: {pm.total}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-3">
+              <span className="badge badge-primary font-bold text-[10px] uppercase">Supplier Purchases</span>
+              <h3 className="text-3xl font-black font-mono text-slate-900">৳2,450,000</h3>
+              <p className="text-xs text-slate-500">Procured from ABC Electronics & Vendor Partners</p>
+            </div>
 
-        {/* 3. DELIVERY & LOGISTICS STATUS */}
-        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h3 className="font-black text-lg text-slate-900 flex items-center gap-2">
-              <Truck className="w-5 h-5 text-purple-600" /> Delivery Status Stream
-            </h3>
-            <span className="text-xs font-bold text-slate-400">Orders</span>
-          </div>
-
-          <div className="space-y-3">
-            {deliveryStatusList.map((ds, i) => (
-              <div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100 text-xs">
-                <div>
-                  <p className="font-extrabold text-slate-900">{ds.status}</p>
-                  <p className="text-[10px] text-slate-400">{ds.count.toLocaleString()} orders processed</p>
-                </div>
-                <span className={`badge ${ds.badge} font-mono font-bold text-xs`}>
-                  {ds.percent}%
-                </span>
-              </div>
-            ))}
+            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-3">
+              <span className="badge badge-accent text-slate-950 font-bold text-[10px] uppercase">Purchase Cost Total</span>
+              <h3 className="text-3xl font-black font-mono text-emerald-600">৳1,950,000</h3>
+              <p className="text-xs text-slate-500">Paid out to suppliers in year 2026</p>
+            </div>
           </div>
         </div>
+      )}
 
-      </div>
-
-      {/* BOTTOM ROW: TOP SELLING PRODUCTS & LOW-STOCK AUDITS */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        
-        {/* TOP SELLING PRODUCTS TABLE */}
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-xs p-6 space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h3 className="font-black text-lg text-slate-900 flex items-center gap-2">
-              <Flame className="w-5 h-5 text-amber-500 fill-amber-500" /> Top Selling Products
-            </h3>
-            <span className="badge badge-warning text-slate-950 font-bold text-xs">BEST PERFORMERS</span>
+      {/* SECTION 4: FINANCIAL REPORTS */}
+      {activeCategory === "financial" && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
+              <DollarSign className="w-6 h-6 text-emerald-600" /> Financial Reports & P&L
+            </h2>
+            <button 
+              onClick={() => exportCSVReport("Financial_Statement", [
+                ["Financial Metric", "Amount (৳)"],
+                ["Revenue", "128450"],
+                ["Expenses", "211200"],
+                ["Net Profit", "42500"],
+                ["Supplier Dues", "40000"]
+              ])}
+              className="btn btn-xs btn-outline font-bold gap-1 rounded-lg"
+            >
+              <Download className="w-3.5 h-3.5 text-primary" /> Export Financial CSV
+            </button>
           </div>
 
-          <div className="space-y-3">
-            {topSellingProducts.map((p, idx) => (
-              <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                <div className="flex items-center gap-3">
-                  <img src={p.image} alt={p.name} className="w-10 h-10 rounded-xl object-cover border border-slate-200" />
-                  <div>
-                    <p className="font-extrabold text-slate-900 text-xs line-clamp-1">{p.name}</p>
-                    <p className="text-[10px] text-emerald-600 font-bold">{p.sold}</p>
-                  </div>
-                </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs space-y-2">
+              <span className="text-[10px] font-bold text-slate-400 uppercase">Gross Revenue</span>
+              <h3 className="text-2xl font-black text-slate-900 font-mono">৳128,450</h3>
+              <p className="text-[11px] text-slate-500">Sales Income</p>
+            </div>
 
-                <div className="text-right">
-                  <p className="font-mono font-black text-slate-900 text-sm">৳{p.revenue.toLocaleString()}</p>
-                  <span className="text-[10px] text-slate-400 font-mono">Stock: {p.stock} left</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs space-y-2">
+              <span className="text-[10px] font-bold text-red-600 uppercase">Total Expenses</span>
+              <h3 className="text-2xl font-black text-red-600 font-mono">৳211,200</h3>
+              <p className="text-[11px] text-slate-500">Overhead, Rent & Salaries</p>
+            </div>
 
-        {/* LOW-STOCK PRODUCTS ALERT AUDIT */}
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-xs p-6 space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h3 className="font-black text-lg text-slate-900 flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-red-500" /> Low-Stock Products Audit
-            </h3>
-            <span className="badge badge-error text-white font-bold text-xs">REORDER NEEDED</span>
-          </div>
+            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs space-y-2">
+              <span className="text-[10px] font-bold text-emerald-600 uppercase">Net Profit</span>
+              <h3 className="text-2xl font-black text-emerald-600 font-mono">৳42,500</h3>
+              <p className="text-[11px] text-emerald-700 font-bold">33.8% Margin</p>
+            </div>
 
-          <div className="space-y-3">
-            {lowStockProducts.map((p, idx) => (
-              <div key={idx} className="p-4 bg-red-50/60 rounded-2xl border border-red-200 flex items-center justify-between">
-                <div>
-                  <span className="badge badge-outline text-[10px] font-bold text-red-700">{p.category}</span>
-                  <p className="font-extrabold text-slate-900 text-sm mt-0.5">{p.name}</p>
-                  <p className="text-[10px] text-slate-500 font-mono">SKU: {p.sku}</p>
-                </div>
-
-                <div className="text-right">
-                  <span className="badge badge-error text-white font-mono font-black text-xs">
-                    {p.stock} LEFT
-                  </span>
-                  <p className="text-[10px] text-red-700 font-bold mt-1">Min Reorder: {p.minStock}</p>
-                </div>
-              </div>
-            ))}
+            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs space-y-2">
+              <span className="text-[10px] font-bold text-amber-600 uppercase">Supplier Dues</span>
+              <h3 className="text-2xl font-black text-amber-600 font-mono">৳40,000</h3>
+              <p className="text-[11px] text-amber-800 font-bold">Outstanding Liability</p>
+            </div>
           </div>
         </div>
+      )}
 
-      </div>
+      {/* SECTION 5: CUSTOMER REPORTS */}
+      {activeCategory === "customers" && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
+              <Users className="w-6 h-6 text-primary" /> Customer Acquisition & Loyalty Reports
+            </h2>
+            <button 
+              onClick={() => exportCSVReport("Customer_Report", [
+                ["Customer Metric", "Value"],
+                ["New Customers", "540"],
+                ["Top Customer Spending", "Abu Sayed - ৳48,500"],
+                ["Repeat Purchase Rate", "67.2%"]
+              ])}
+              className="btn btn-xs btn-outline font-bold gap-1 rounded-lg"
+            >
+              <Download className="w-3.5 h-3.5 text-primary" /> Export Customer CSV
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-3">
+              <span className="badge badge-purple bg-purple-600 text-white font-bold text-[10px] uppercase">New Customers</span>
+              <h3 className="text-3xl font-black text-slate-900">540 Users</h3>
+              <p className="text-xs text-slate-500">Registered this month</p>
+            </div>
+
+            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-3">
+              <span className="badge badge-warning text-slate-950 font-black text-[10px] uppercase">Top Spender</span>
+              <h3 className="text-2xl font-black text-slate-900">Abu Sayed</h3>
+              <p className="text-xs text-emerald-600 font-mono font-bold">৳48,500 Total Lifetime Spend</p>
+            </div>
+
+            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-3">
+              <span className="badge badge-success text-white font-bold text-[10px] uppercase">Repeat Customers</span>
+              <h3 className="text-3xl font-black text-emerald-600">67.2%</h3>
+              <p className="text-xs text-slate-500">High Customer Retention Rate</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
