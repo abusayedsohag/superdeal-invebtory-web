@@ -39,6 +39,7 @@ function SidebarLinks() {
     { label: "Suppliers", href: "/admin/suppliers", icon: Truck },
     { label: "Orders", href: "/admin/orders", icon: ShoppingCart, badge: "12 New", badgeColor: "badge-primary" },
     { label: "Returns & Refunds", href: "/admin/returns", icon: RotateCcw, badge: "1 Pending", badgeColor: "badge-warning" },
+    { label: "Delivery & Courier", href: "/admin/delivery", icon: Truck },
     { label: "Customers", href: "/admin/customers", icon: Users },
     { label: "Expenses", href: "/admin/expenses", icon: Receipt },
     { label: "Coupons", href: "/admin/coupons", icon: Ticket },
