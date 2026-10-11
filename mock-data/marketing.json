@@ -1,0 +1,48 @@
+{
+  "flashProducts": [
+    {
+      "id": "fs-101",
+      "name": "iPhone Case (Silicone MagSafe)",
+      "category": "Accessories",
+      "originalPrice": 450,
+      "flashPrice": 250,
+      "discount": "44% OFF",
+      "allocatedStock": 200,
+      "soldStock": 142,
+      "image": "https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?w=100&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": "fs-102",
+      "name": "Ergonomic Optical Mouse",
+      "category": "Electronics",
+      "originalPrice": 890,
+      "flashPrice": 490,
+      "discount": "45% OFF",
+      "allocatedStock": 100,
+      "soldStock": 78,
+      "image": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=100&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": "fs-103",
+      "name": "Mechanical Gaming Keyboard",
+      "category": "Electronics",
+      "originalPrice": 1600,
+      "flashPrice": 990,
+      "discount": "38% OFF",
+      "allocatedStock": 80,
+      "soldStock": 65,
+      "image": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=100&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": "fs-104",
+      "name": "Wireless Gaming Headphone",
+      "category": "Electronics",
+      "originalPrice": 1950,
+      "flashPrice": 1150,
+      "discount": "41% OFF",
+      "allocatedStock": 150,
+      "soldStock": 112,
+      "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100&auto=format&fit=crop&q=80"
+    }
+  ]
+}

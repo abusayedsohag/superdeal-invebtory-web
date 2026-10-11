@@ -1,0 +1,90 @@
+{
+  "warehouses": [
+    {
+      "id": "wh-1",
+      "name": "Dhaka Central Warehouse",
+      "code": "WH-DHK-01",
+      "location": "Tejgaon Industrial Area, Dhaka",
+      "manager": "Rashidul Islam",
+      "phone": "+880 1711-000111",
+      "totalStock": "12,450 Units",
+      "productsCount": "850 SKUs",
+      "racksCount": "48 Racks / 192 Shelves",
+      "purchasesCount": "42 POs",
+      "salesCount": "1,120 Orders",
+      "transfersCount": "28 Transfers",
+      "badge": "Central Hub",
+      "color": "border-primary/30 bg-primary/5 text-primary"
+    },
+    {
+      "id": "wh-2",
+      "name": "Chittagong Port Warehouse",
+      "code": "WH-CTG-02",
+      "location": "Agrabad Commercial Area, Chittagong",
+      "manager": "Kazi Tanvir",
+      "phone": "+880 1819-222333",
+      "totalStock": "4,200 Units",
+      "productsCount": "320 SKUs",
+      "racksCount": "24 Racks / 96 Shelves",
+      "purchasesCount": "18 POs",
+      "salesCount": "240 Orders",
+      "transfersCount": "14 Transfers",
+      "badge": "Port Hub",
+      "color": "border-secondary/30 bg-secondary/5 text-secondary"
+    },
+    {
+      "id": "wh-3",
+      "name": "Rangpur Regional Warehouse",
+      "code": "WH-RNG-03",
+      "location": "Station Road, Rangpur",
+      "manager": "Mahmudul Hasan",
+      "phone": "+880 1733-444555",
+      "totalStock": "1,890 Units",
+      "productsCount": "180 SKUs",
+      "racksCount": "12 Racks / 48 Shelves",
+      "purchasesCount": "8 POs",
+      "salesCount": "110 Orders",
+      "transfersCount": "9 Transfers",
+      "badge": "North Hub",
+      "color": "border-accent/30 bg-accent/5 text-accent"
+    }
+  ],
+  "transfersHistory": [
+    {
+      "id": "TRF-2026-042",
+      "date": "08 Oct 2026, 11:30 AM",
+      "from": "Dhaka Central Warehouse",
+      "to": "Rangpur Regional Warehouse",
+      "product": "Wireless Mouse (SD-MOU-2201)",
+      "qty": 100,
+      "transport": "SA Paribahan Express (Track #SA-9901)",
+      "operator": "David Miller",
+      "status": "In Transit",
+      "badgeColor": "badge-primary"
+    },
+    {
+      "id": "TRF-2026-041",
+      "date": "05 Oct 2026, 03:15 PM",
+      "from": "Chittagong Port Warehouse",
+      "to": "Dhaka Central Warehouse",
+      "product": "Wireless Headphones (SD-HEAD-9081)",
+      "qty": 50,
+      "transport": "Paperfly Logistics Hub",
+      "operator": "Kazi Tanvir",
+      "status": "Completed",
+      "badgeColor": "badge-success text-white"
+    },
+    {
+      "id": "TRF-2026-040",
+      "date": "02 Oct 2026, 10:00 AM",
+      "from": "Dhaka Central Warehouse",
+      "to": "Chittagong Port Warehouse",
+      "product": "Ultra Smart Watch Series 7 Pro",
+      "qty": 30,
+      "transport": "Sundarban Courier Service",
+      "operator": "Rashidul Islam",
+      "status": "Completed",
+      "badgeColor": "badge-success text-white"
+    }
+  ]
+}

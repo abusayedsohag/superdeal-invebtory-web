@@ -1,0 +1,197 @@
+[
+  {
+    "id": "CUST-1001",
+    "name": "Abu Sayed",
+    "phone": "+880 1711-223344",
+    "email": "sayed@superdeal.com",
+    "address": "House 42, Road 11, Block D, Banani",
+    "district": "Dhaka",
+    "upazila": "Banani",
+    "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80",
+    "status": "Active",
+    "totalOrders": 18,
+    "totalSpending": 48500,
+    "lastOrder": "08 Oct 2026 (#SD-10293)",
+    "loyaltyPoints": 1450,
+    "loyaltyTier": "Gold",
+    "ordersHistory": [
+      {
+        "orderId": "SD-10293",
+        "date": "08 Oct 2026",
+        "total": 2450,
+        "status": "Processing",
+        "itemsCount": 2
+      },
+      {
+        "orderId": "SD-10188",
+        "date": "24 Sep 2026",
+        "total": 14900,
+        "status": "Delivered",
+        "itemsCount": 3
+      },
+      {
+        "orderId": "SD-10052",
+        "date": "10 Aug 2026",
+        "total": 31150,
+        "status": "Delivered",
+        "itemsCount": 5
+      }
+    ],
+    "wishlist": [
+      {
+        "name": "Wireless Gaming Headphones",
+        "price": 1950,
+        "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100&auto=format&fit=crop&q=80",
+        "inStock": true
+      },
+      {
+        "name": "Ultra Smart Watch Series 7",
+        "price": 1490,
+        "image": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100&auto=format&fit=crop&q=80",
+        "inStock": true
+      },
+      {
+        "name": "Ergonomic Optical Mouse",
+        "price": 890,
+        "image": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=100&auto=format&fit=crop&q=80",
+        "inStock": true
+      }
+    ],
+    "reviews": [
+      {
+        "productName": "Wireless Gaming Headphones",
+        "rating": 5,
+        "date": "26 Sep 2026",
+        "comment": "Excellent noise cancellation and sound quality! Delivery was super quick in Banani."
+      },
+      {
+        "productName": "Fast USB-C Charging Cable",
+        "rating": 4,
+        "date": "12 Aug 2026",
+        "comment": "Durable braided cable. Fast charging works perfectly with my phone."
+      }
+    ],
+    "refundHistory": [
+      {
+        "refundId": "RF-9901",
+        "orderId": "SD-10102",
+        "date": "14 Sep 2026",
+        "amount": 1200,
+        "reason": "Damaged Portable Speaker on Arrival",
+        "status": "Completed"
+      }
+    ]
+  },
+  {
+    "id": "CUST-1002",
+    "name": "Tanvir Hossain",
+    "phone": "+880 1819-223344",
+    "email": "tanvir@example.com",
+    "address": "House 15, Road 4, Agrabad Commercial Area",
+    "district": "Chittagong",
+    "upazila": "Agrabad",
+    "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80",
+    "status": "Active",
+    "totalOrders": 9,
+    "totalSpending": 22400,
+    "lastOrder": "08 Oct 2026 (#SD-10294)",
+    "loyaltyPoints": 680,
+    "loyaltyTier": "Silver",
+    "ordersHistory": [
+      {
+        "orderId": "SD-10294",
+        "date": "08 Oct 2026",
+        "total": 1490,
+        "status": "Confirmed",
+        "itemsCount": 1
+      },
+      {
+        "orderId": "SD-10120",
+        "date": "15 Sep 2026",
+        "total": 20910,
+        "status": "Delivered",
+        "itemsCount": 4
+      }
+    ],
+    "wishlist": [
+      {
+        "name": "4K Streaming Camera",
+        "price": 4500,
+        "image": "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=100&auto=format&fit=crop&q=80",
+        "inStock": true
+      }
+    ],
+    "reviews": [
+      {
+        "productName": "Ultra Smart Watch Series 7",
+        "rating": 5,
+        "date": "20 Sep 2026",
+        "comment": "Best smartwatch at this price range. Battery lasts 4 days easily!"
+      }
+    ],
+    "refundHistory": []
+  },
+  {
+    "id": "CUST-1003",
+    "name": "Sharmin Sultana",
+    "phone": "+880 1733-445566",
+    "email": "sharmin@example.com",
+    "address": "Lane 3, Zindabazar",
+    "district": "Sylhet",
+    "upazila": "Zindabazar",
+    "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80",
+    "status": "Active",
+    "totalOrders": 14,
+    "totalSpending": 36800,
+    "lastOrder": "07 Oct 2026 (#SD-10295)",
+    "loyaltyPoints": 1120,
+    "loyaltyTier": "Gold",
+    "ordersHistory": [
+      {
+        "orderId": "SD-10295",
+        "date": "07 Oct 2026",
+        "total": 3200,
+        "status": "Packed",
+        "itemsCount": 2
+      }
+    ],
+    "wishlist": [
+      {
+        "name": "Mechanical Gaming Keyboard",
+        "price": 1600,
+        "image": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=100&auto=format&fit=crop&q=80",
+        "inStock": true
+      }
+    ],
+    "reviews": [],
+    "refundHistory": []
+  },
+  {
+    "id": "CUST-1004",
+    "name": "Mahmud Hasan",
+    "phone": "+880 1911-887766",
+    "email": "mahmud@example.com",
+    "address": "Station Road, Near Town Hall",
+    "district": "Rangpur",
+    "upazila": "Station Road",
+    "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80",
+    "status": "Active",
+    "totalOrders": 4,
+    "totalSpending": 8900,
+    "lastOrder": "06 Oct 2026 (#SD-10296)",
+    "loyaltyPoints": 260,
+    "loyaltyTier": "Bronze",
+    "ordersHistory": [
+      {
+        "orderId": "SD-10296",
+        "date": "06 Oct 2026",
+        "total": 890,
+        "status": "Out for Delivery",
+        "itemsCount": 1
+      }
+    ],
+    "wishlist": [],
+    "reviews": [],
+    "refundHistory": []
+  }
+]

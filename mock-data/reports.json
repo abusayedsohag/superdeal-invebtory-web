@@ -1,0 +1,65 @@
+{
+  "salesSummary": {
+    "dailySales": {
+      "value": "৳125,430",
+      "orders": 348,
+      "growth": "+18.4% vs yesterday"
+    },
+    "monthlySales": {
+      "value": "৳1,980,000",
+      "orders": 5400,
+      "growth": "+14.2% vs last month"
+    },
+    "yearlySales": {
+      "value": "৳21,500,000",
+      "orders": 62000,
+      "growth": "+28.0% YoY Growth"
+    }
+  },
+  "inventorySummary": {
+    "currentStock": "18,540 Units",
+    "valuation": "৳18.5M",
+    "lowStockCount": 84,
+    "outOfStockCount": 23,
+    "movementAudit": "+100 Purchase / -5 Sale / -2 Damage / +10 Return"
+  },
+  "purchaseSummary": {
+    "supplierPurchasesTotal": "৳2,450,000",
+    "purchaseCostTotal": "৳1,950,000",
+    "supplierTable": [
+      {
+        "supplier": "ABC Electronics",
+        "total": 2450000,
+        "paid": 1950000,
+        "due": 500000
+      },
+      {
+        "supplier": "Global Tech Supplies",
+        "total": 1800000,
+        "paid": 1800000,
+        "due": 0
+      },
+      {
+        "supplier": "Trend Apparel Mills",
+        "total": 950000,
+        "paid": 700000,
+        "due": 250000
+      }
+    ]
+  },
+  "financialSummary": {
+    "revenue": 128450,
+    "expenses": 211200,
+    "profit": 42500,
+    "profitMargin": "33.8%",
+    "dues": 40000
+  },
+  "customerSummary": {
+    "newCustomers": 540,
+    "topCustomer": {
+      "name": "Abu Sayed",
+      "spend": 48500
+    },
+    "repeatCustomerRate": "67.2%"
+  }
+}

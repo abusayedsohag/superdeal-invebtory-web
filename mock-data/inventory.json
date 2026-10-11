@@ -1,0 +1,67 @@
+[
+  {
+    "id": "1",
+    "sku": "SD-MOU-2201",
+    "name": "Wireless Mouse",
+    "category": "Electronics",
+    "warehouse": "Main Warehouse (Dhaka)",
+    "availableStock": 103,
+    "minStock": 20,
+    "maxStock": 300,
+    "unitCost": 15,
+    "totalValue": "৳154.5k",
+    "status": "Healthy"
+  },
+  {
+    "id": "2",
+    "sku": "SD-HEAD-9081",
+    "name": "Wireless Noise-Canceling Headphones",
+    "category": "Electronics",
+    "warehouse": "Main Warehouse (Dhaka)",
+    "availableStock": 18,
+    "minStock": 25,
+    "maxStock": 200,
+    "unitCost": 120,
+    "totalValue": "৳216.0k",
+    "status": "Low Stock"
+  },
+  {
+    "id": "3",
+    "sku": "SD-WTC-7721",
+    "name": "Ultra Smart Watch Series 7 Pro",
+    "category": "Gadgets",
+    "warehouse": "Sub Warehouse (Chittagong)",
+    "availableStock": 25,
+    "minStock": 15,
+    "maxStock": 150,
+    "unitCost": 90,
+    "totalValue": "৳225.0k",
+    "status": "Healthy"
+  },
+  {
+    "id": "4",
+    "sku": "SD-KEY-1022",
+    "name": "Ergonomic Mechanical Gaming Keyboard",
+    "category": "Accessories",
+    "warehouse": "Sub Warehouse (Chittagong)",
+    "availableStock": 4,
+    "minStock": 20,
+    "maxStock": 100,
+    "unitCost": 50,
+    "totalValue": "৳20.0k",
+    "status": "Low Stock"
+  },
+  {
+    "id": "5",
+    "sku": "SD-CBL-4421",
+    "name": "USB-C Fast Charger Cable",
+    "category": "Electronics",
+    "warehouse": "Main Warehouse (Dhaka)",
+    "availableStock": 0,
+    "minStock": 50,
+    "maxStock": 500,
+    "unitCost": 4,
+    "totalValue": "৳0.00",
+    "status": "Out of Stock"
+  }
+]

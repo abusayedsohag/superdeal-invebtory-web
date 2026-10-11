@@ -1,0 +1,94 @@
+{
+  "couriers": [
+    {
+      "name": "Steadfast",
+      "logoText": "⚡ Steadfast Courier",
+      "status": "Connected",
+      "apiKey": "st_live_99812039102",
+      "webhookUrl": "https://superdeal.com/api/webhooks/steadfast",
+      "totalShipments": 1420
+    },
+    {
+      "name": "Pathao",
+      "logoText": "🚴 Pathao Courier",
+      "status": "Connected",
+      "apiKey": "pth_live_77192038102",
+      "webhookUrl": "https://superdeal.com/api/webhooks/pathao",
+      "totalShipments": 980
+    },
+    {
+      "name": "RedX",
+      "logoText": "🔴 RedX Logistics",
+      "status": "Connected",
+      "apiKey": "redx_token_88912301",
+      "webhookUrl": "https://superdeal.com/api/webhooks/redx",
+      "totalShipments": 450
+    },
+    {
+      "name": "Custom",
+      "logoText": "🛵 In-House Delivery Team",
+      "status": "Connected",
+      "apiKey": "INTERNAL_RIDER_TEAM",
+      "webhookUrl": "N/A - Direct Dispatch",
+      "totalShipments": 210
+    }
+  ],
+  "deliveryOrders": [
+    {
+      "id": "DEL-1001",
+      "orderId": "SD-10293",
+      "customerName": "Rahim Ahmed",
+      "customerPhone": "+880 1711-223344",
+      "district": "Dhaka",
+      "address": "House 42, Road 11, Block D, Banani",
+      "courier": "Steadfast",
+      "trackingCode": "SD-9283928",
+      "cashToCollect": 2450,
+      "status": "In Transit",
+      "dispatchDate": "09 Oct 2026",
+      "estimatedDelivery": "11 Oct 2026"
+    },
+    {
+      "id": "DEL-1002",
+      "orderId": "SD-10294",
+      "customerName": "Tanvir Hossain",
+      "customerPhone": "+880 1819-223344",
+      "district": "Chittagong",
+      "address": "Agrabad Commercial Area",
+      "courier": "Pathao",
+      "trackingCode": "PTH-889120",
+      "cashToCollect": 0,
+      "status": "Consignment Created",
+      "dispatchDate": "09 Oct 2026",
+      "estimatedDelivery": "12 Oct 2026"
+    },
+    {
+      "id": "DEL-1003",
+      "orderId": "SD-10295",
+      "customerName": "Sharmin Sultana",
+      "customerPhone": "+880 1733-445566",
+      "district": "Sylhet",
+      "address": "Lane 3, Zindabazar",
+      "courier": "RedX",
+      "trackingCode": "REDX-77491",
+      "cashToCollect": 3200,
+      "status": "Out for Delivery",
+      "dispatchDate": "08 Oct 2026",
+      "estimatedDelivery": "10 Oct 2026"
+    },
+    {
+      "id": "DEL-1004",
+      "orderId": "SD-10296",
+      "customerName": "Mahmud Hasan",
+      "customerPhone": "+880 1911-887766",
+      "district": "Rangpur",
+      "address": "Station Road, Near Town Hall",
+      "courier": "Custom",
+      "trackingCode": "RIDER-04",
+      "cashToCollect": 890,
+      "status": "Delivered",
+      "dispatchDate": "06 Oct 2026",
+      "estimatedDelivery": "08 Oct 2026"
+    }
+  ]
+}

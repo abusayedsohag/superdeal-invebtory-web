@@ -1,0 +1,57 @@
+[
+  {
+    "id": "1",
+    "sku": "SD-HEAD-9081",
+    "name": "Wireless Noise-Canceling Headphones",
+    "category": "Electronics",
+    "costPrice": 120,
+    "price": 199.99,
+    "stock": 18,
+    "variantsCount": 3,
+    "status": "Active"
+  },
+  {
+    "id": "2",
+    "sku": "SD-WTC-7721",
+    "name": "Ultra Smart Watch Series 7 Pro",
+    "category": "Gadgets",
+    "costPrice": 90,
+    "price": 149,
+    "stock": 25,
+    "variantsCount": 4,
+    "status": "Active"
+  },
+  {
+    "id": "3",
+    "sku": "SD-KEY-1022",
+    "name": "Ergonomic Mechanical Gaming Keyboard",
+    "category": "Accessories",
+    "costPrice": 50,
+    "price": 89.99,
+    "stock": 4,
+    "variantsCount": 2,
+    "status": "Low Stock"
+  },
+  {
+    "id": "4",
+    "sku": "TSH-PREM-2026",
+    "name": "Premium Cotton Crewneck T-Shirt",
+    "category": "Fashion",
+    "costPrice": 55,
+    "price": 85,
+    "stock": 145,
+    "variantsCount": 12,
+    "status": "Active"
+  },
+  {
+    "id": "5",
+    "sku": "SD-MOU-2201",
+    "name": "Minimalist Wireless Optical Mouse",
+    "category": "Electronics",
+    "costPrice": 15,
+    "price": 29.99,
+    "stock": 0,
+    "variantsCount": 1,
+    "status": "Out of Stock"
+  }
+]

@@ -1,0 +1,47 @@
+[
+  {
+    "id": "REV-1001",
+    "customerName": "Abu Sayed",
+    "customerAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80",
+    "productName": "Wireless Gaming Headphones",
+    "rating": 5,
+    "comment": "Very good product.",
+    "isVerifiedPurchase": true,
+    "date": "09 Oct 2026",
+    "status": "Pending"
+  },
+  {
+    "id": "REV-1002",
+    "customerName": "Tanvir Hossain",
+    "customerAvatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80",
+    "productName": "Ergonomic Optical Mouse",
+    "rating": 5,
+    "comment": "Super smooth sensor tracking and excellent battery performance! Highly recommended.",
+    "isVerifiedPurchase": true,
+    "date": "08 Oct 2026",
+    "status": "Approved",
+    "adminReply": "Thank you Tanvir! Glad you loved the mouse performance."
+  },
+  {
+    "id": "REV-1003",
+    "customerName": "Sharmin Sultana",
+    "customerAvatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80",
+    "productName": "Mechanical Gaming Keyboard",
+    "rating": 4,
+    "comment": "Keys feel tactile and responsive. RGB lighting patterns look amazing at night.",
+    "isVerifiedPurchase": true,
+    "date": "06 Oct 2026",
+    "status": "Approved"
+  },
+  {
+    "id": "REV-1004",
+    "customerName": "Anonymous User",
+    "customerAvatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80",
+    "productName": "Ultra Smart Watch Series 7",
+    "rating": 1,
+    "comment": "Spam promo message link http://unverified-link.com",
+    "isVerifiedPurchase": false,
+    "date": "04 Oct 2026",
+    "status": "Rejected"
+  }
+]

@@ -1,0 +1,35 @@
+[
+  {
+    "sku": "MOU-001-BLK",
+    "barcode": "894000123456",
+    "name": "Wireless Optical Mouse",
+    "variant": "Black",
+    "category": "Electronics",
+    "price": 890,
+    "stock": 103,
+    "warehouse": "Dhaka Warehouse (Rack A-12)",
+    "image": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=100&auto=format&fit=crop&q=80"
+  },
+  {
+    "sku": "KEY-002-RGB",
+    "barcode": "894000654321",
+    "name": "Mechanical Gaming Keyboard",
+    "variant": "RGB Backlit",
+    "category": "Accessories",
+    "price": 1600,
+    "stock": 45,
+    "warehouse": "Dhaka Warehouse (Rack B-04)",
+    "image": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=100&auto=format&fit=crop&q=80"
+  },
+  {
+    "sku": "HED-003-WHT",
+    "barcode": "894000987654",
+    "name": "Wireless Gaming Headphones",
+    "variant": "White",
+    "category": "Electronics",
+    "price": 1950,
+    "stock": 18,
+    "warehouse": "Chittagong Hub (Shelf A-01)",
+    "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100&auto=format&fit=crop&q=80"
+  }
+]

@@ -1,0 +1,65 @@
+[
+  {
+    "id": "EXP-2026-001",
+    "amount": 45000,
+    "category": "Rent",
+    "date": "01 Oct 2026",
+    "description": "Monthly warehouse building rent for Dhaka Central Hub",
+    "attachment": "rent_receipt_oct.pdf",
+    "paymentMethod": "Bank Transfer"
+  },
+  {
+    "id": "EXP-2026-002",
+    "amount": 120000,
+    "category": "Salary",
+    "date": "05 Oct 2026",
+    "description": "Staff monthly payroll salaries for October",
+    "attachment": "payroll_statement.pdf",
+    "paymentMethod": "Bank Transfer"
+  },
+  {
+    "id": "EXP-2026-003",
+    "amount": 8500,
+    "category": "Electricity",
+    "date": "04 Oct 2026",
+    "description": "DESCO commercial electricity bill for main office & warehouse",
+    "attachment": "desco_bill_oct.jpg",
+    "paymentMethod": "bKash Merchant"
+  },
+  {
+    "id": "EXP-2026-004",
+    "amount": 4000,
+    "category": "Internet",
+    "date": "02 Oct 2026",
+    "description": "Dedicated fiber optic broadband line monthly bill",
+    "attachment": "isp_invoice_oct.pdf",
+    "paymentMethod": "Nagad"
+  },
+  {
+    "id": "EXP-2026-005",
+    "amount": 15000,
+    "category": "Marketing",
+    "date": "06 Oct 2026",
+    "description": "Meta Ads Facebook & Instagram sponsored campaign budget",
+    "attachment": "meta_ads_invoice.pdf",
+    "paymentMethod": "Bank Transfer"
+  },
+  {
+    "id": "EXP-2026-006",
+    "amount": 6500,
+    "category": "Packaging",
+    "date": "07 Oct 2026",
+    "description": "Custom branded carton boxes, bubble wrap & adhesive tapes",
+    "attachment": "packaging_voucher.jpg",
+    "paymentMethod": "Cash"
+  },
+  {
+    "id": "EXP-2026-007",
+    "amount": 3200,
+    "category": "Transportation",
+    "date": "08 Oct 2026",
+    "description": "Inter-warehouse stock transfer van fuel & courier charges",
+    "attachment": "transport_memo.pdf",
+    "paymentMethod": "Cash"
+  }
+]

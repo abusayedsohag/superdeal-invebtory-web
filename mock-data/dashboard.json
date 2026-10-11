@@ -1,0 +1,153 @@
+{
+  "topCards": [
+    {
+      "title": "Today's Sale",
+      "value": "৳125,430",
+      "change": "+18.4% vs yesterday",
+      "isUp": true,
+      "icon": "DollarSign",
+      "bgGradient": "from-emerald-500 to-teal-600",
+      "accentBg": "bg-emerald-500/10 text-emerald-600 border-emerald-200"
+    },
+    {
+      "title": "Orders",
+      "value": "348",
+      "change": "348 Orders Processed",
+      "isUp": true,
+      "icon": "ShoppingCart",
+      "bgGradient": "from-blue-500 to-indigo-600",
+      "accentBg": "bg-blue-500/10 text-blue-600 border-blue-200"
+    },
+    {
+      "title": "Customers",
+      "value": "12,540",
+      "change": "+540 New this month",
+      "isUp": true,
+      "icon": "Users",
+      "bgGradient": "from-purple-500 to-indigo-700",
+      "accentBg": "bg-purple-500/10 text-purple-600 border-purple-200"
+    },
+    {
+      "title": "Profit",
+      "value": "৳42,500",
+      "change": "33.8% Profit Margin",
+      "isUp": true,
+      "icon": "TrendingUp",
+      "bgGradient": "from-amber-500 to-orange-600",
+      "accentBg": "bg-amber-500/10 text-amber-600 border-amber-200"
+    }
+  ],
+  "recentOrders": [
+    {
+      "id": "SD-10293",
+      "customer": "Rahim Ahmed",
+      "date": "Today, 02:45 PM",
+      "amount": 2450,
+      "payment": "bKash MFS",
+      "status": "Processing",
+      "badge": "badge-primary"
+    },
+    {
+      "id": "SD-10294",
+      "customer": "Tanvir Hossain",
+      "date": "Today, 01:15 PM",
+      "amount": 1490,
+      "payment": "COD",
+      "status": "Confirmed",
+      "badge": "badge-info text-white"
+    },
+    {
+      "id": "SD-10295",
+      "customer": "Sharmin Sultana",
+      "date": "Today, 11:30 AM",
+      "amount": 3200,
+      "payment": "Nagad MFS",
+      "status": "Packed",
+      "badge": "badge-secondary text-white"
+    },
+    {
+      "id": "SD-10296",
+      "customer": "Mahmud Hasan",
+      "date": "Yesterday, 04:20 PM",
+      "amount": 890,
+      "payment": "COD",
+      "status": "Out for Delivery",
+      "badge": "bg-indigo-600 text-white"
+    }
+  ],
+  "lowStockAlerts": [
+    {
+      "name": "Wireless Headphones",
+      "sku": "SD-HEAD-9081",
+      "stock": 2,
+      "minStock": 10,
+      "location": "Dhaka Hub (Rack A-12)"
+    },
+    {
+      "name": "Gaming Mechanical Keyboard",
+      "sku": "SD-KEY-1022",
+      "stock": 4,
+      "minStock": 15,
+      "location": "Chittagong Hub (Shelf B-04)"
+    },
+    {
+      "name": "USB-C Fast Charger Cable",
+      "sku": "SD-CBL-4421",
+      "stock": 1,
+      "minStock": 20,
+      "location": "Dhaka Hub (Rack C-01)"
+    }
+  ],
+  "salesChartData": [
+    {
+      "month": "Jan",
+      "sales": 85,
+      "profit": 28
+    },
+    {
+      "month": "Feb",
+      "sales": 92,
+      "profit": 31
+    },
+    {
+      "month": "Mar",
+      "sales": 110,
+      "profit": 36
+    },
+    {
+      "month": "Apr",
+      "sales": 105,
+      "profit": 34
+    },
+    {
+      "month": "May",
+      "sales": 128,
+      "profit": 42
+    },
+    {
+      "month": "Jun",
+      "sales": 145,
+      "profit": 48
+    },
+    {
+      "month": "Jul",
+      "sales": 160,
+      "profit": 54
+    },
+    {
+      "month": "Aug",
+      "sales": 152,
+      "profit": 50
+    },
+    {
+      "month": "Sep",
+      "sales": 175,
+      "profit": 58
+    },
+    {
+      "month": "Oct",
+      "sales": 198,
+      "profit": 65
+    }
+  ]
+}

@@ -1,0 +1,114 @@
+[
+  {
+    "id": "cat-1",
+    "name": "Electronics",
+    "slug": "electronics",
+    "icon": "💻",
+    "image": "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=300&auto=format&fit=crop&q=80",
+    "banner": "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1000&auto=format&fit=crop&q=80",
+    "seoTitle": "Best Electronics & Tech Accessories | SuperDeal",
+    "seoDescription": "Shop top rated laptops, mobile phones, headphones and smart accessories at lowest prices.",
+    "status": "Active",
+    "itemCount": 1450,
+    "subcategories": [
+      {
+        "id": "sub-101",
+        "name": "Mobile",
+        "slug": "electronics/mobile",
+        "itemCount": 420,
+        "status": "Active"
+      },
+      {
+        "id": "sub-102",
+        "name": "Laptop",
+        "slug": "electronics/laptop",
+        "itemCount": 310,
+        "status": "Active"
+      },
+      {
+        "id": "sub-103",
+        "name": "Headphone",
+        "slug": "electronics/headphone",
+        "itemCount": 280,
+        "status": "Active"
+      },
+      {
+        "id": "sub-104",
+        "name": "Accessories",
+        "slug": "electronics/accessories",
+        "itemCount": 440,
+        "status": "Active"
+      }
+    ]
+  },
+  {
+    "id": "cat-2",
+    "name": "Fashion",
+    "slug": "fashion",
+    "icon": "👗",
+    "image": "https://images.unsplash.com/photo-1445205170230-053b83016050?w=300&auto=format&fit=crop&q=80",
+    "banner": "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1000&auto=format&fit=crop&q=80",
+    "seoTitle": "Trending Fashion Apparel & Shoes | SuperDeal",
+    "seoDescription": "Explore clothing collections for Men, Women and Kids with daily flash sales.",
+    "status": "Active",
+    "itemCount": 920,
+    "subcategories": [
+      {
+        "id": "sub-201",
+        "name": "Men",
+        "slug": "fashion/men",
+        "itemCount": 380,
+        "status": "Active"
+      },
+      {
+        "id": "sub-202",
+        "name": "Women",
+        "slug": "fashion/women",
+        "itemCount": 410,
+        "status": "Active"
+      },
+      {
+        "id": "sub-203",
+        "name": "Kids",
+        "slug": "fashion/kids",
+        "itemCount": 130,
+        "status": "Active"
+      }
+    ]
+  },
+  {
+    "id": "cat-3",
+    "name": "Home & Kitchen",
+    "slug": "home-kitchen",
+    "icon": "🏠",
+    "image": "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=300&auto=format&fit=crop&q=80",
+    "banner": "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1000&auto=format&fit=crop&q=80",
+    "seoTitle": "Smart Home Appliances & Kitchenware | SuperDeal",
+    "seoDescription": "Upgrade your living room, dining and kitchen with high-quality home decor.",
+    "status": "Active",
+    "itemCount": 780,
+    "subcategories": [
+      {
+        "id": "sub-301",
+        "name": "Kitchen Appliances",
+        "slug": "home-kitchen/appliances",
+        "itemCount": 320,
+        "status": "Active"
+      },
+      {
+        "id": "sub-302",
+        "name": "Furniture & Decor",
+        "slug": "home-kitchen/furniture",
+        "itemCount": 260,
+        "status": "Active"
+      },
+      {
+        "id": "sub-303",
+        "name": "Bedding & Bath",
+        "slug": "home-kitchen/bedding",
+        "itemCount": 200,
+        "status": "Active"
+      }
+    ]
+  }
+]

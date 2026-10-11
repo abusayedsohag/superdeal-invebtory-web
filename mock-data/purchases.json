@@ -1,0 +1,65 @@
+[
+  {
+    "poNumber": "PO-1023",
+    "supplier": "ABC Electronics",
+    "warehouse": "Dhaka Warehouse",
+    "date": "09 Oct 2026",
+    "items": [
+      {
+        "name": "Wireless Mouse",
+        "qty": 100,
+        "cost": 400
+      },
+      {
+        "name": "Mechanical Keyboard",
+        "qty": 50,
+        "cost": 700
+      }
+    ],
+    "subtotal": 75000,
+    "shipping": 2000,
+    "total": 77000,
+    "status": "Ordered"
+  },
+  {
+    "poNumber": "PO-1022",
+    "supplier": "Global Tech Supplies Ltd",
+    "warehouse": "Chittagong Warehouse",
+    "date": "05 Oct 2026",
+    "items": [
+      {
+        "name": "Ultra Smart Watch Series 7",
+        "qty": 40,
+        "cost": 1100
+      }
+    ],
+    "subtotal": 44000,
+    "shipping": 1500,
+    "total": 45500,
+    "status": "Received",
+    "receivedAt": "07 Oct 2026"
+  },
+  {
+    "poNumber": "PO-1021",
+    "supplier": "Trend Apparel & Textile Mills",
+    "warehouse": "Dhaka Warehouse",
+    "date": "01 Oct 2026",
+    "items": [
+      {
+        "name": "Cotton Men T-Shirt (Black/M)",
+        "qty": 200,
+        "cost": 250
+      },
+      {
+        "name": "Slim Fit Denim Jeans",
+        "qty": 100,
+        "cost": 650
+      }
+    ],
+    "subtotal": 115000,
+    "shipping": 3000,
+    "total": 118000,
+    "status": "Received",
+    "receivedAt": "03 Oct 2026"
+  }
+]

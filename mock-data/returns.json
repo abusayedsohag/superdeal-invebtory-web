@@ -1,0 +1,48 @@
+[
+  {
+    "id": "RET-901",
+    "orderId": "SD10293",
+    "customerName": "Rahim Ahmed",
+    "customerPhone": "+880 1711-223344",
+    "customerAddress": "House 42, Road 11, Block D, Banani, Dhaka",
+    "productName": "Wireless Gaming Headphones",
+    "itemQty": 1,
+    "orderTotal": 2450,
+    "reason": "Product damaged",
+    "requestType": "Return",
+    "status": "Pending",
+    "warehouseLocation": "Dhaka Warehouse",
+    "requestDate": "09 Oct 2026"
+  },
+  {
+    "id": "RET-902",
+    "orderId": "SD10288",
+    "customerName": "Tanvir Hossain",
+    "customerPhone": "+880 1819-223344",
+    "customerAddress": "Agrabad Commercial Area, Chittagong",
+    "productName": "Ultra Smart Watch Series 7",
+    "itemQty": 1,
+    "orderTotal": 1490,
+    "reason": "Wrong size/color received",
+    "requestType": "Replacement",
+    "status": "Approved",
+    "warehouseLocation": "Chittagong Warehouse",
+    "requestDate": "07 Oct 2026"
+  },
+  {
+    "id": "RET-903",
+    "orderId": "SD10250",
+    "customerName": "Sharmin Sultana",
+    "customerPhone": "+880 1733-445566",
+    "customerAddress": "Zindabazar, Sylhet",
+    "productName": "Mechanical Gaming Keyboard",
+    "itemQty": 1,
+    "orderTotal": 1600,
+    "reason": "Faulty USB connection",
+    "requestType": "Refund",
+    "status": "Full Refund",
+    "refundedAmount": 1600,
+    "warehouseLocation": "Dhaka Warehouse",
+    "requestDate": "04 Oct 2026"
+  }
+]

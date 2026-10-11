@@ -1,0 +1,410 @@
+{
+  "roles": [
+    {
+      "name": "Super Admin",
+      "level": 1,
+      "description": "Unrestricted root system access across all modules",
+      "badgeColor": "badge-error text-white font-black",
+      "permissions": [
+        {
+          "module": "Products",
+          "view": true,
+          "create": true,
+          "edit": true,
+          "delete": true
+        },
+        {
+          "module": "Orders",
+          "view": true,
+          "create": true,
+          "edit": true,
+          "delete": true
+        },
+        {
+          "module": "Inventory",
+          "view": true,
+          "create": true,
+          "edit": true,
+          "delete": true
+        },
+        {
+          "module": "Suppliers",
+          "view": true,
+          "create": true,
+          "edit": true,
+          "delete": true
+        },
+        {
+          "module": "Expenses",
+          "view": true,
+          "create": true,
+          "edit": true,
+          "delete": true
+        },
+        {
+          "module": "Reports",
+          "view": true,
+          "create": true,
+          "edit": true,
+          "delete": true
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "level": 2,
+      "description": "Full store management except root system settings",
+      "badgeColor": "badge-primary font-black",
+      "permissions": [
+        {
+          "module": "Products",
+          "view": true,
+          "create": true,
+          "edit": true,
+          "delete": true
+        },
+        {
+          "module": "Orders",
+          "view": true,
+          "create": true,
+          "edit": true,
+          "delete": false
+        },
+        {
+          "module": "Inventory",
+          "view": true,
+          "create": true,
+          "edit": true,
+          "delete": true
+        },
+        {
+          "module": "Suppliers",
+          "view": true,
+          "create": true,
+          "edit": true,
+          "delete": false
+        },
+        {
+          "module": "Expenses",
+          "view": true,
+          "create": true,
+          "edit": true,
+          "delete": false
+        },
+        {
+          "module": "Reports",
+          "view": true,
+          "create": true,
+          "edit": false,
+          "delete": false
+        }
+      ]
+    },
+    {
+      "name": "Manager",
+      "level": 3,
+      "description": "General store Operations, Products & Orders oversight",
+      "badgeColor": "badge-accent text-slate-950 font-black",
+      "permissions": [
+        {
+          "module": "Products",
+          "view": true,
+          "create": true,
+          "edit": true,
+          "delete": false
+        },
+        {
+          "module": "Orders",
+          "view": true,
+          "create": true,
+          "edit": true,
+          "delete": false
+        },
+        {
+          "module": "Inventory",
+          "view": true,
+          "create": true,
+          "edit": true,
+          "delete": false
+        },
+        {
+          "module": "Suppliers",
+          "view": true,
+          "create": false,
+          "edit": false,
+          "delete": false
+        },
+        {
+          "module": "Expenses",
+          "view": true,
+          "create": true,
+          "edit": false,
+          "delete": false
+        },
+        {
+          "module": "Reports",
+          "view": true,
+          "create": false,
+          "edit": false,
+          "delete": false
+        }
+      ]
+    },
+    {
+      "name": "Inventory Manager",
+      "level": 4,
+      "description": "Stock audits, Warehouses, Purchases & Suppliers management",
+      "badgeColor": "badge-warning text-slate-950 font-extrabold",
+      "permissions": [
+        {
+          "module": "Products",
+          "view": true,
+          "create": true,
+          "edit": true,
+          "delete": false
+        },
+        {
+          "module": "Orders",
+          "view": true,
+          "create": false,
+          "edit": false,
+          "delete": false
+        },
+        {
+          "module": "Inventory",
+          "view": true,
+          "create": true,
+          "edit": true,
+          "delete": true
+        },
+        {
+          "module": "Suppliers",
+          "view": true,
+          "create": true,
+          "edit": true,
+          "delete": false
+        },
+        {
+          "module": "Expenses",
+          "view": false,
+          "create": false,
+          "edit": false,
+          "delete": false
+        },
+        {
+          "module": "Reports",
+          "view": true,
+          "create": false,
+          "edit": false,
+          "delete": false
+        }
+      ]
+    },
+    {
+      "name": "Sales Manager",
+      "level": 5,
+      "description": "Order fulfillment, Coupons, Marketing & Customer relations",
+      "badgeColor": "badge-info text-white font-extrabold",
+      "permissions": [
+        {
+          "module": "Products",
+          "view": true,
+          "create": false,
+          "edit": false,
+          "delete": false
+        },
+        {
+          "module": "Orders",
+          "view": true,
+          "create": true,
+          "edit": true,
+          "delete": false
+        },
+        {
+          "module": "Inventory",
+          "view": true,
+          "create": false,
+          "edit": false,
+          "delete": false
+        },
+        {
+          "module": "Suppliers",
+          "view": false,
+          "create": false,
+          "edit": false,
+          "delete": false
+        },
+        {
+          "module": "Expenses",
+          "view": false,
+          "create": false,
+          "edit": false,
+          "delete": false
+        },
+        {
+          "module": "Reports",
+          "view": true,
+          "create": false,
+          "edit": false,
+          "delete": false
+        }
+      ]
+    },
+    {
+      "name": "Accountant",
+      "level": 6,
+      "description": "Financial expenses, Supplier dues, Accounting & P&L Reports",
+      "badgeColor": "bg-purple-600 text-white font-extrabold",
+      "permissions": [
+        {
+          "module": "Products",
+          "view": true,
+          "create": false,
+          "edit": false,
+          "delete": false
+        },
+        {
+          "module": "Orders",
+          "view": true,
+          "create": false,
+          "edit": false,
+          "delete": false
+        },
+        {
+          "module": "Inventory",
+          "view": true,
+          "create": false,
+          "edit": false,
+          "delete": false
+        },
+        {
+          "module": "Suppliers",
+          "view": true,
+          "create": true,
+          "edit": true,
+          "delete": false
+        },
+        {
+          "module": "Expenses",
+          "view": true,
+          "create": true,
+          "edit": true,
+          "delete": true
+        },
+        {
+          "module": "Reports",
+          "view": true,
+          "create": true,
+          "edit": true,
+          "delete": false
+        }
+      ]
+    },
+    {
+      "name": "Delivery Manager",
+      "level": 7,
+      "description": "Courier dispatches, Consignment tracking & Logistics",
+      "badgeColor": "badge-neutral text-slate-200 font-extrabold",
+      "permissions": [
+        {
+          "module": "Products",
+          "view": true,
+          "create": false,
+          "edit": false,
+          "delete": false
+        },
+        {
+          "module": "Orders",
+          "view": true,
+          "create": false,
+          "edit": true,
+          "delete": false
+        },
+        {
+          "module": "Inventory",
+          "view": true,
+          "create": false,
+          "edit": false,
+          "delete": false
+        },
+        {
+          "module": "Suppliers",
+          "view": false,
+          "create": false,
+          "edit": false,
+          "delete": false
+        },
+        {
+          "module": "Expenses",
+          "view": false,
+          "create": false,
+          "edit": false,
+          "delete": false
+        },
+        {
+          "module": "Reports",
+          "view": false,
+          "create": false,
+          "edit": false,
+          "delete": false
+        }
+      ]
+    }
+  ],
+  "staffUsers": [
+    {
+      "id": "STF-101",
+      "name": "Abu Sayed",
+      "email": "sayed@superdeal.com",
+      "phone": "+880 1711-223344",
+      "role": "Super Admin",
+      "status": "Active",
+      "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": "STF-102",
+      "name": "Sarah Jenkins",
+      "email": "sarah@superdeal.com",
+      "phone": "+880 1819-223344",
+      "role": "Admin",
+      "status": "Active",
+      "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": "STF-103",
+      "name": "David Miller",
+      "email": "david@superdeal.com",
+      "phone": "+880 1733-445566",
+      "role": "Inventory Manager",
+      "status": "Active",
+      "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": "STF-104",
+      "name": "Tanvir Hossain",
+      "email": "tanvir@superdeal.com",
+      "phone": "+880 1911-887766",
+      "role": "Sales Manager",
+      "status": "Active",
+      "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": "STF-105",
+      "name": "Ayesha Sultana",
+      "email": "ayesha@superdeal.com",
+      "phone": "+880 1622-334455",
+      "role": "Accountant",
+      "status": "Active",
+      "avatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": "STF-106",
+      "name": "Mahmud Hasan",
+      "email": "mahmud@superdeal.com",
+      "phone": "+880 1755-443322",
+      "role": "Delivery Manager",
+      "status": "Active",
+      "avatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80"
+    }
+  ]
+}
