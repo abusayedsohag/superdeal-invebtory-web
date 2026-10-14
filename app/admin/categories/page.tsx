@@ -5,20 +5,12 @@ import Link from "next/link";
 import { 
   FolderTree, 
   Plus, 
-  Search, 
   Edit, 
   Trash2, 
-  Eye, 
   Image as ImageIcon, 
-  Globe, 
-  CheckCircle2, 
-  XCircle, 
   ChevronRight, 
   ChevronDown, 
-  Layers, 
-  Sparkles,
   Save,
-  Tag
 } from "lucide-react";
 
 // Initial Category Tree Data Structure
@@ -142,11 +134,11 @@ export default function AdminCategoriesPage() {
     e.preventDefault();
 
     if (!formData.name) return;
+    console.log(formData)
 
     const generatedSlug = formData.slug || formData.name.toLowerCase().replace(/\s+/g, "-");
 
     if (formData.parent === "none") {
-      // Root Parent Category
       if (modalMode === "create") {
         setCategoryTree(prev => [
           ...prev,

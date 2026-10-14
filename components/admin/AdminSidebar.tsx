@@ -91,7 +91,7 @@ function SidebarLinks() {
 
 export default function AdminSidebar() {
   return (
-    <aside className="w-64 bg-slate-900 text-slate-100 min-h-screen flex flex-col border-r border-slate-800 shadow-xl shrink-0">
+    <aside className="w-64 bg-slate-900 text-slate-100 min-h-screen flex flex-col border-r border-slate-800 shadow-xl shrink-0 max-h-screen  sticky top-0">
       {/* Sidebar Header */}
       <div className="p-4 border-b border-slate-800 flex items-center justify-between">
         <Link href="/admin/dashboard" className="flex items-center gap-2 text-xl font-extrabold text-white">
