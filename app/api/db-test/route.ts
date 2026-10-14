@@ -1,0 +1,26 @@
+import { getDb } from "@/lib/mongodb";
+import { NextResponse } from "next/server";
+
+export async function GET() {
+    try {
+
+        const db = await getDb();
+        await db.command({ ping: 1 });
+
+        return NextResponse.json({
+            success: true,
+            message: "MongoDB connected successfully!",
+            database: db.databaseName,
+        })
+    } catch (error) {
+        console.error("MongoDB connection error:", error);
+
+        return NextResponse.json(
+            {
+                success: false,
+                message: "Database connection failed",
+            },
+            { status: 500 }
+        );
+    }
+}

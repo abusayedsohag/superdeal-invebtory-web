@@ -1,76 +1,45 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import { 
-  FolderTree, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Image as ImageIcon, 
-  ChevronRight, 
-  ChevronDown, 
+import { useEffect, useState } from "react";
+import {
+  FolderTree,
+  Plus,
+  Edit,
+  Trash2,
+  Image as ImageIcon,
+  ChevronRight,
+  ChevronDown,
   Save,
 } from "lucide-react";
 
-// Initial Category Tree Data Structure
-const initialCategoryTree = [
-  {
-    id: "cat-1",
-    name: "Electronics",
-    slug: "electronics",
-    icon: "💻",
-    image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=300&auto=format&fit=crop&q=80",
-    banner: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1000&auto=format&fit=crop&q=80",
-    seoTitle: "Best Electronics & Tech Accessories | SuperDeal",
-    seoDescription: "Shop top rated laptops, mobile phones, headphones and smart accessories at lowest prices.",
-    status: "Active",
-    itemCount: 1450,
-    subcategories: [
-      { id: "sub-101", name: "Mobile", slug: "electronics/mobile", itemCount: 420, status: "Active" },
-      { id: "sub-102", name: "Laptop", slug: "electronics/laptop", itemCount: 310, status: "Active" },
-      { id: "sub-103", name: "Headphone", slug: "electronics/headphone", itemCount: 280, status: "Active" },
-      { id: "sub-104", name: "Accessories", slug: "electronics/accessories", itemCount: 440, status: "Active" }
-    ]
-  },
-  {
-    id: "cat-2",
-    name: "Fashion",
-    slug: "fashion",
-    icon: "👗",
-    image: "https://images.unsplash.com/photo-1445205170230-053b83016050?w=300&auto=format&fit=crop&q=80",
-    banner: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1000&auto=format&fit=crop&q=80",
-    seoTitle: "Trending Fashion Apparel & Shoes | SuperDeal",
-    seoDescription: "Explore clothing collections for Men, Women and Kids with daily flash sales.",
-    status: "Active",
-    itemCount: 920,
-    subcategories: [
-      { id: "sub-201", name: "Men", slug: "fashion/men", itemCount: 380, status: "Active" },
-      { id: "sub-202", name: "Women", slug: "fashion/women", itemCount: 410, status: "Active" },
-      { id: "sub-203", name: "Kids", slug: "fashion/kids", itemCount: 130, status: "Active" }
-    ]
-  },
-  {
-    id: "cat-3",
-    name: "Home & Kitchen",
-    slug: "home-kitchen",
-    icon: "🏠",
-    image: "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=300&auto=format&fit=crop&q=80",
-    banner: "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1000&auto=format&fit=crop&q=80",
-    seoTitle: "Smart Home Appliances & Kitchenware | SuperDeal",
-    seoDescription: "Upgrade your living room, dining and kitchen with high-quality home decor.",
-    status: "Active",
-    itemCount: 780,
-    subcategories: [
-      { id: "sub-301", name: "Kitchen Appliances", slug: "home-kitchen/appliances", itemCount: 320, status: "Active" },
-      { id: "sub-302", name: "Furniture & Decor", slug: "home-kitchen/furniture", itemCount: 260, status: "Active" },
-      { id: "sub-303", name: "Bedding & Bath", slug: "home-kitchen/bedding", itemCount: 200, status: "Active" }
-    ]
-  }
-];
+interface Subcategory {
+  id: string;
+  name: string;
+  slug: string;
+  image?: string;
+  icon?: string;
+  itemCount: number;
+  seoTitle?: string;
+  seoDescription?: string;
+  status: string;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  image?: string;
+  icon?: string;
+  itemCount?: number;
+  seoTitle?: string;
+  seoDescription?: string;
+  status?: string;
+  subcategories: Subcategory[];
+}
 
 export default function AdminCategoriesPage() {
-  const [categoryTree, setCategoryTree] = useState(initialCategoryTree);
+
+  const [categoryTree, setCategoryTree] = useState<Category[]>([]);
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
     "cat-1": true,
     "cat-2": true,
@@ -80,7 +49,25 @@ export default function AdminCategoriesPage() {
   // Modal State for Category Form
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
-  
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch("/api/categories");
+        const result = await response.json();
+
+        if (result.success) {
+          setCategoryTree(result.categories);
+        }
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+
   // Form State
   const [formData, setFormData] = useState({
     id: "",
@@ -101,7 +88,7 @@ export default function AdminCategoriesPage() {
   const handleOpenCreateModal = () => {
     setModalMode("create");
     setFormData({
-      id: `cat-${Date.now()}`,
+      id: "",
       name: "",
       parent: "none",
       slug: "",
@@ -130,53 +117,67 @@ export default function AdminCategoriesPage() {
     setIsModalOpen(true);
   };
 
-  const handleSaveForm = (e: React.FormEvent) => {
+  const handleSaveForm = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.name.trim()) return;
 
-    if (!formData.name) return;
-    console.log(formData)
+    const generatedSlug =
+      formData.slug.trim() ||
+      formData.name.trim().toLowerCase().replace(/\s+/g, "-");
 
-    const generatedSlug = formData.slug || formData.name.toLowerCase().replace(/\s+/g, "-");
+    const isParent = formData.parent === "none";
 
-    if (formData.parent === "none") {
-      if (modalMode === "create") {
-        setCategoryTree(prev => [
-          ...prev,
-          {
-            id: formData.id,
-            name: formData.name,
-            slug: generatedSlug,
-            icon: "📦",
-            image: formData.image,
-            banner: formData.banner,
-            seoTitle: formData.seoTitle,
-            seoDescription: formData.seoDescription,
-            status: formData.status,
-            itemCount: 0,
-            subcategories: []
-          }
-        ]);
-      } else {
-        setCategoryTree(prev =>
-          prev.map(c => c.id === formData.id ? { ...c, ...formData, slug: generatedSlug } : c)
-        );
-      }
-    } else {
-      // Subcategory under parent
-      setCategoryTree(prev =>
-        prev.map(parentCat => {
-          if (parentCat.id === formData.parent) {
-            const exists = parentCat.subcategories.some(s => s.id === formData.id);
-            const updatedSubcats = exists
-              ? parentCat.subcategories.map(s => s.id === formData.id ? { ...s, name: formData.name, slug: `${parentCat.slug}/${generatedSlug}`, status: formData.status } : s)
-              : [...parentCat.subcategories, { id: formData.id, name: formData.name, slug: `${parentCat.slug}/${generatedSlug}`, itemCount: 0, status: formData.status }];
-            return { ...parentCat, subcategories: updatedSubcats };
-          }
-          return parentCat;
-        })
-      );
+    const parentCategory = isParent ? null :
+      categoryTree.find((c) => c.id === formData.parent);
+
+    if (!isParent && !parentCategory) {
+      alert("Parent category not Found");
+      return;
     }
 
+    const finalSlug = isParent
+      ? generatedSlug
+      : `${parentCategory?.slug}/${generatedSlug}`;
+
+
+    const data = {
+      name: formData.name.trim(),
+      slug: finalSlug,
+      parentId: isParent ? null : formData.parent,
+      image: formData.image || "",
+      banner: formData.banner || "",
+      seoTitle: formData.seoTitle || "",
+      seoDescription: formData.seoDescription || "",
+      status: formData.status,
+    };
+
+    try {
+      const isCreate = modalMode === "create";
+
+      const response = await fetch("/api/categories", {
+        method: isCreate ? "POST" : "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(
+          isCreate ? { ...data, id: formData.id } : data
+        ),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to save category");
+      }
+    } catch (error) {
+      console.error("Save category error:", error);
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong"
+      );
+    }
     setIsModalOpen(false);
   };
 
@@ -258,8 +259,8 @@ export default function AdminCategoriesPage() {
 
                 {/* Parent Category Controls */}
                 <div className="flex items-center gap-2">
-                  <button 
-                    onClick={() => toggleStatus(parentCat.id)} 
+                  <button
+                    onClick={() => toggleStatus(parentCat.id)}
                     className={`badge badge-sm font-bold cursor-pointer ${parentCat.status === "Active" ? "badge-success text-white" : "badge-neutral"}`}
                   >
                     {parentCat.status}
@@ -293,8 +294,8 @@ export default function AdminCategoriesPage() {
 
                         <div className="flex items-center gap-3">
                           <span className="text-slate-500 font-medium">{sub.itemCount} items</span>
-                          <button 
-                            onClick={() => toggleStatus(sub.id, true, parentCat.id)} 
+                          <button
+                            onClick={() => toggleStatus(sub.id, true, parentCat.id)}
                             className={`badge badge-xs font-bold cursor-pointer ${sub.status === "Active" ? "badge-success text-white" : "badge-neutral"}`}
                           >
                             {sub.status}
