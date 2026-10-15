@@ -2,15 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Suspense } from "react";
-import { 
-  ShoppingBag, 
-  Heart, 
-  User, 
-  Search, 
-  ShieldCheck, 
-  Package, 
-  Grid, 
+import { Suspense, useEffect, useState } from "react";
+import {
+  ShoppingBag,
+  Heart,
+  User,
+  Search,
+  ShieldCheck,
+  Package,
+  Grid,
   Home,
   ShoppingCart
 } from "lucide-react";
@@ -25,6 +25,7 @@ function NavLinks() {
     { label: "Wishlist", href: "/wishlist", icon: Heart, badge: 3 },
     { label: "My Orders", href: "/my-orders", icon: Package },
   ];
+
 
   return (
     <nav className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto py-1 no-scrollbar">
@@ -48,11 +49,36 @@ function NavLinks() {
 }
 
 export default function CustomerNavbar() {
+
+  const [category, setCategory] = useState<
+    { id: string; name: string }[]
+  >([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch("/api/categories/category");
+        const result = await response.json();
+
+        console.log(result)
+
+        if (result.success) {
+          setCategory(result.categories);
+        }
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+      }
+    };
+
+    fetchCategories();
+  }, [])
+
+  
   return (
     <header className="sticky top-0 z-50 bg-base-100 shadow-sm border-b border-base-200">
       {/* Top Notification Bar */}
       <div className="bg-primary text-primary-content text-[10px] sm:text-xs py-1 px-2 sm:px-4 text-center font-medium flex flex-wrap justify-between items-center gap-1">
-        <span className="truncate max-w-[200px] sm:max-w-none">🎉 Mega Sale! Up to 50% Off!</span>
+        <span className="truncate max-w-50 sm:max-w-none">🎉 Mega Sale! Up to 50% Off!</span>
         <Link href="/admin/dashboard" className="btn btn-[10px] btn-xs btn-outline border-white text-white hover:bg-white hover:text-primary gap-1 py-0.5 h-auto min-h-0">
           <ShieldCheck className="w-3 h-3" />
           Admin Panel
@@ -72,16 +98,16 @@ export default function CustomerNavbar() {
           <div className="join w-full">
             <select className="select select-bordered join-item bg-base-200 text-sm focus:outline-none">
               <option>All Categories</option>
-              <option>Electronics</option>
-              <option>Fashion</option>
-              <option>Home & Living</option>
-              <option>Beauty & Health</option>
-              <option>Sports & Fitness</option>
+              {
+                category.map((cat) => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))
+              }
             </select>
-            <input 
-              type="text" 
-              placeholder="Search products, brands..." 
-              className="input input-bordered join-item w-full focus:outline-none" 
+            <input
+              type="text"
+              placeholder="Search products, brands..."
+              className="input input-bordered join-item w-full focus:outline-none"
             />
             <button className="btn btn-primary join-item px-6">
               <Search className="w-5 h-5" />
