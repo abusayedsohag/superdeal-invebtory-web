@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { DynamicIcon } from "lucide-react/dynamic";
 import {
   FolderTree,
   Plus,
@@ -65,8 +66,7 @@ export default function AdminCategoriesPage() {
     };
 
     fetchCategories();
-  }, []);
-
+  }, [isModalOpen]);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -75,7 +75,7 @@ export default function AdminCategoriesPage() {
     parent: "none",
     slug: "",
     image: "",
-    banner: "",
+    icon: "",
     seoTitle: "",
     seoDescription: "",
     status: "Active"
@@ -93,7 +93,7 @@ export default function AdminCategoriesPage() {
       parent: "none",
       slug: "",
       image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=300&auto=format&fit=crop&q=80",
-      banner: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1000&auto=format&fit=crop&q=80",
+      icon: "",
       seoTitle: "",
       seoDescription: "",
       status: "Active"
@@ -107,9 +107,9 @@ export default function AdminCategoriesPage() {
       id: cat.id,
       name: cat.name,
       parent: parentId,
-      slug: cat.slug,
+      slug: "",
       image: cat.image || "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=300&auto=format&fit=crop&q=80",
-      banner: cat.banner || "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1000&auto=format&fit=crop&q=80",
+      icon: cat.icon,
       seoTitle: cat.seoTitle || `${cat.name} Collection | SuperDeal`,
       seoDescription: cat.seoDescription || `Buy top rated ${cat.name} online with discount coupons.`,
       status: cat.status
@@ -145,7 +145,7 @@ export default function AdminCategoriesPage() {
       slug: finalSlug,
       parentId: isParent ? null : formData.parent,
       image: formData.image || "",
-      banner: formData.banner || "",
+      icon: formData.icon || "",
       seoTitle: formData.seoTitle || "",
       seoDescription: formData.seoDescription || "",
       status: formData.status,
@@ -160,7 +160,7 @@ export default function AdminCategoriesPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(
-          isCreate ? { ...data, id: formData.id } : data
+          isCreate ? data : { ...data, id: formData.id }
         ),
       });
 
@@ -245,11 +245,15 @@ export default function AdminCategoriesPage() {
                     {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                   </button>
 
-                  <img src={parentCat.image} alt={parentCat.name} className="w-10 h-10 rounded-xl object-cover border border-slate-200 shrink-0" />
+                  <div className="w-10 h-10 rounded-xl border border-slate-200 bg-white flex items-center justify-center shrink-0">
+                    <DynamicIcon
+                      name={parentCat.icon as any}
+                      size={40}
+                    />
+                  </div>
 
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-xl">{parentCat.icon}</span>
                       <h3 className="font-extrabold text-slate-900 text-base truncate">{parentCat.name}</h3>
                       <span className="badge badge-primary font-bold text-xs">{parentCat.itemCount} items</span>
                     </div>
@@ -287,7 +291,10 @@ export default function AdminCategoriesPage() {
                     {parentCat.subcategories.map((sub) => (
                       <div key={sub.id} className="flex items-center justify-between p-2.5 bg-slate-50/50 hover:bg-slate-100/60 rounded-xl border border-slate-100 text-xs">
                         <div className="flex items-center gap-3">
-                          <span className="text-slate-400 font-mono">├──</span>
+                          <DynamicIcon
+                            name={sub.icon as any}
+                            size={20}
+                          />
                           <span className="font-bold text-slate-900">{sub.name}</span>
                           <span className="text-[10px] text-slate-500 font-mono">/{sub.slug}</span>
                         </div>
@@ -331,7 +338,7 @@ export default function AdminCategoriesPage() {
             <form onSubmit={handleSaveForm} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1 sm:col-span-2">
-                  <label className="text-xs font-bold uppercase text-slate-500">Category Name *</label>
+                  <label className="text-xs font-bold uppercase text-slate-500">Category Name</label>
                   <input
                     type="text"
                     required
@@ -347,9 +354,11 @@ export default function AdminCategoriesPage() {
                   <select
                     value={formData.parent}
                     onChange={(e) => setFormData({ ...formData, parent: e.target.value })}
+                    required
+                    disabled={modalMode === "edit"}
                     className="select select-sm select-bordered w-full focus:outline-none"
                   >
-                    <option value="none">Root Category (Main)</option>
+                    <option value="none">Root Category</option>
                     {categoryTree.map(cat => (
                       <option key={cat.id} value={cat.id}>Under: {cat.name}</option>
                     ))}
@@ -357,7 +366,7 @@ export default function AdminCategoriesPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase text-slate-500">Slug (Auto Generated)</label>
+                  <label className="text-xs font-bold uppercase text-slate-500">Slug</label>
                   <input
                     type="text"
                     value={formData.slug}
@@ -372,17 +381,19 @@ export default function AdminCategoriesPage() {
                   <input
                     type="text"
                     value={formData.image}
+                    required
                     onChange={(e) => setFormData({ ...formData, image: e.target.value })}
                     className="input input-sm input-bordered w-full focus:outline-none"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase text-slate-500">Banner Image URL</label>
+                  <label className="text-xs font-bold uppercase text-slate-500">Lucide Icon Name</label>
                   <input
                     type="text"
-                    value={formData.banner}
-                    onChange={(e) => setFormData({ ...formData, banner: e.target.value })}
+                    value={formData.icon as any}
+                    onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+                    required
                     className="input input-sm input-bordered w-full focus:outline-none"
                   />
                 </div>

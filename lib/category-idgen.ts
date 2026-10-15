@@ -11,7 +11,7 @@ export async function generateCategoryId(parentId?: string | null): Promise<stri
             const number = Number(num.id.replace("cat-", ""));
             return Math.max(max, number);
         }, 0);
-        return `cat-${maxId + 1}`;
+        return data ? `cat-${maxId + 1}` : `cat-1` ;
     }
 
     const parent = await collection.findOne(
