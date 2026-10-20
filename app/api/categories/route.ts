@@ -137,6 +137,45 @@ export async function PATCH(request: Request) {
         const body = await request.json();
         const { id, name, slug, parentId, image, icon, seoTitle, seoDescription, status } = body;
 
+        // If updating only status (quick toggle)
+        if (id && status && (!name || !slug)) {
+            if (parentId && parentId !== "none") {
+                const result = await collection.updateOne(
+                    { id: parentId, "subcategories.id": id },
+                    { $set: { "subcategories.$.status": status } }
+                );
+
+                if (result.matchedCount === 0) {
+                    return NextResponse.json(
+                        { success: false, message: "Parent category or subcategory not found" },
+                        { status: 404 }
+                    );
+                }
+
+                return NextResponse.json({
+                    success: true,
+                    message: "Subcategory status updated successfully",
+                });
+            } else {
+                const result = await collection.updateOne(
+                    { id },
+                    { $set: { status } }
+                );
+
+                if (result.matchedCount === 0) {
+                    return NextResponse.json(
+                        { success: false, message: "Category not found" },
+                        { status: 404 }
+                    );
+                }
+
+                return NextResponse.json({
+                    success: true,
+                    message: "Category status updated successfully",
+                });
+            }
+        }
+
         if (!id || !name || !slug) {
             return NextResponse.json(
                 {

@@ -221,23 +221,43 @@ export default function AdminCategoriesPage() {
     }
   };
 
-  const toggleStatus = (catId: string, isSub = false, parentId = "") => {
+  const toggleStatus = async (catId: string, isSub = false, parentId = "") => {
+    let newStatus = "Active";
     if (!isSub) {
+      const cat = categoryTree.find(c => c.id === catId);
+      newStatus = cat?.status === "Active" ? "Inactive" : "Active";
       setCategoryTree(prev =>
-        prev.map(c => c.id === catId ? { ...c, status: c.status === "Active" ? "Inactive" : "Active" } : c)
+        prev.map(c => c.id === catId ? { ...c, status: newStatus } : c)
       );
     } else {
+      const parent = categoryTree.find(p => p.id === parentId);
+      const sub = parent?.subcategories.find(s => s.id === catId);
+      newStatus = sub?.status === "Active" ? "Inactive" : "Active";
       setCategoryTree(prev =>
         prev.map(p => {
           if (p.id === parentId) {
             return {
               ...p,
-              subcategories: p.subcategories.map(s => s.id === catId ? { ...s, status: s.status === "Active" ? "Inactive" : "Active" } : s)
+              subcategories: p.subcategories.map(s => s.id === catId ? { ...s, status: newStatus } : s)
             };
           }
           return p;
         })
       );
+    }
+
+    try {
+      await fetch("/api/categories", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: catId,
+          parentId: isSub ? parentId : null,
+          status: newStatus,
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to update status in DB:", err);
     }
   };
 
