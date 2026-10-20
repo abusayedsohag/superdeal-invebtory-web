@@ -73,7 +73,7 @@ export default function CustomerNavbar() {
     fetchCategories();
   }, [])
 
-  
+
   return (
     <header className="sticky top-0 z-50 bg-base-100 shadow-sm border-b border-base-200">
       {/* Top Notification Bar */}
@@ -133,7 +133,7 @@ export default function CustomerNavbar() {
                 <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Avatar" />
               </div>
             </label>
-            <ul tabIndex={0} className="mt-3 z-[1] p-2 shadow-lg menu menu-sm dropdown-content bg-base-100 rounded-box w-48 sm:w-52 border border-base-200">
+            <ul tabIndex={0} className="mt-3 z-1 p-2 shadow-lg menu menu-sm dropdown-content bg-base-100 rounded-box w-48 sm:w-52 border border-base-200">
               <li className="menu-title px-4 py-2 text-xs font-semibold uppercase text-base-content/60">Account</li>
               <li><Link href="/account"><User className="w-4 h-4" /> Profile & Settings</Link></li>
               <li><Link href="/my-orders"><Package className="w-4 h-4" /> My Orders</Link></li>

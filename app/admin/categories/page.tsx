@@ -41,30 +41,27 @@ interface Category {
 export default function AdminCategoriesPage() {
 
   const [categoryTree, setCategoryTree] = useState<Category[]>([]);
-  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
-    "cat-1": true,
-    "cat-2": true,
-    "cat-3": true
-  });
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({"cat-1": true,});
 
   // Modal State for Category Form
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch("/api/categories");
+      const result = await response.json();
+
+      if (result.success) {
+        setCategoryTree(result.categories);
+      }
+    } catch (error) {
+      console.error("Failed to fetch categories:", error);
+    }
+  };
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await fetch("/api/categories");
-        const result = await response.json();
-
-        if (result.success) {
-          setCategoryTree(result.categories);
-        }
-      } catch (error) {
-        console.error("Failed to fetch categories:", error);
-      }
-    };
-
     fetchCategories();
   }, [isModalOpen]);
 
@@ -181,20 +178,46 @@ export default function AdminCategoriesPage() {
     setIsModalOpen(false);
   };
 
-  const handleDeleteCategory = (catId: string, isSub = false, parentId = "") => {
-    if (!confirm("Are you sure you want to delete this category?")) return;
+  const handleDeleteCategory = async (catId: string, isSub = false, parentId = "") => {
+    const itemType = isSub ? "subcategory" : "category";
+    if (!confirm(`Are you sure you want to delete this ${itemType}?`)) return;
 
-    if (!isSub) {
-      setCategoryTree(prev => prev.filter(c => c.id !== catId));
-    } else {
-      setCategoryTree(prev =>
-        prev.map(p => {
-          if (p.id === parentId) {
-            return { ...p, subcategories: p.subcategories.filter(s => s.id !== catId) };
-          }
-          return p;
-        })
-      );
+    setDeletingId(catId);
+    try {
+      const response = await fetch("/api/categories", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: catId,
+          parentId: isSub ? parentId : null,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || `Failed to delete ${itemType}`);
+      }
+
+      if (!isSub) {
+        setCategoryTree(prev => prev.filter(c => c.id !== catId));
+      } else {
+        setCategoryTree(prev =>
+          prev.map(p => {
+            if (p.id === parentId) {
+              return { ...p, subcategories: p.subcategories.filter(s => s.id !== catId) };
+            }
+            return p;
+          })
+        );
+      }
+    } catch (error) {
+      console.error("Delete category error:", error);
+      alert(error instanceof Error ? error.message : "Failed to delete category");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -257,7 +280,7 @@ export default function AdminCategoriesPage() {
                       <h3 className="font-extrabold text-slate-900 text-base truncate">{parentCat.name}</h3>
                       <span className="badge badge-primary font-bold text-xs">{parentCat.itemCount} items</span>
                     </div>
-                    <p className="text-xs text-slate-500 font-mono truncate">Slug: /{parentCat.slug}</p>
+                    <p className="text-xs font-bold text-slate-500 font-mono truncate badge badge-soft">{parentCat.subcategories.length} Subcategories</p>
                   </div>
                 </div>
 
@@ -274,8 +297,17 @@ export default function AdminCategoriesPage() {
                     <Edit className="w-4 h-4" />
                   </button>
 
-                  <button onClick={() => handleDeleteCategory(parentCat.id)} className="btn btn-ghost btn-xs text-slate-600 hover:text-error">
-                    <Trash2 className="w-4 h-4" />
+                  <button
+                    onClick={() => handleDeleteCategory(parentCat.id)}
+                    disabled={deletingId === parentCat.id}
+                    title="Delete category"
+                    className="btn btn-ghost btn-xs text-slate-600 hover:text-error"
+                  >
+                    {deletingId === parentCat.id ? (
+                      <span className="loading loading-spinner loading-xs text-error"></span>
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -310,8 +342,17 @@ export default function AdminCategoriesPage() {
                           <button onClick={() => handleOpenEditModal(sub, parentCat.id)} className="btn btn-ghost btn-xs text-slate-600 hover:text-primary">
                             <Edit className="w-3.5 h-3.5" />
                           </button>
-                          <button onClick={() => handleDeleteCategory(sub.id, true, parentCat.id)} className="btn btn-ghost btn-xs text-slate-600 hover:text-error">
-                            <Trash2 className="w-3.5 h-3.5" />
+                          <button
+                            onClick={() => handleDeleteCategory(sub.id, true, parentCat.id)}
+                            disabled={deletingId === sub.id}
+                            title="Delete subcategory"
+                            className="btn btn-ghost btn-xs text-slate-600 hover:text-error"
+                          >
+                            {deletingId === sub.id ? (
+                              <span className="loading loading-spinner loading-xs text-error"></span>
+                            ) : (
+                              <Trash2 className="w-3.5 h-3.5" />
+                            )}
                           </button>
                         </div>
                       </div>
