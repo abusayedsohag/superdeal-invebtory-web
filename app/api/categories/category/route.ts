@@ -8,7 +8,7 @@ export async function GET() {
 
         const categories = await collection.find(
             { status: { $ne: "Inactive" } },
-            { projection: { id: 1, name: 1, slug: 1, icon: 1, status: 1 } }
+            { projection: { id: 1, name: 1, slug: 1, icon: 1, status: 1, subcategories: 1 } }
         ).toArray();
 
         return NextResponse.json({

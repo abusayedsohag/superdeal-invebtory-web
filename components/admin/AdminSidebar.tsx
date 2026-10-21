@@ -33,7 +33,7 @@ function SidebarLinks() {
   const menuItems = [
     { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
     { label: "Products", href: "/admin/products", icon: Package, badge: "142" },
-    { label: "Categories", href: "/admin/categories", icon: Grid, badge: "18" },
+    { label: "Categories", href: "/admin/categories", icon: Grid },
     { label: "Inventory", href: "/admin/inventory", icon: Boxes, badge: "Low: 4", badgeColor: "badge-error" },
     { label: "Barcode & POS", href: "/admin/barcode", icon: Barcode, badge: "POS", badgeColor: "badge-accent text-slate-950 font-black" },
     { label: "Warehouses", href: "/admin/warehouses", icon: Building2, badge: "3 Hubs" },

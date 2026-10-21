@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import { 
   Star, 
   Heart, 
@@ -17,7 +18,10 @@ import {
 } from "lucide-react";
 import ProductRecommendation from "@/components/customer/ProductRecommendation";
 
-export default function ProductDetailPage() {
+function ProductDetailContent() {
+  const params = useParams();
+  const routeId = params?.id as string;
+
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState("description");
@@ -31,8 +35,8 @@ export default function ProductDetailPage() {
     setTimeout(() => setToastMsg(null), 3000);
   };
 
-  const product = {
-    id: "1",
+  const [product, setProduct] = useState({
+    id: "prod-1",
     name: "Wireless Noise-Canceling Premium Headphones",
     sku: "SD-HEAD-9081",
     brand: "SoundMaster",
@@ -54,7 +58,47 @@ export default function ProductDetailPage() {
       "Bluetooth 5.3 Ultra Low Latency Wireless Connection",
       "Plush Memory Foam Ear Cushions for All-Day Comfort"
     ]
-  };
+  });
+
+  useEffect(() => {
+    if (!routeId) return;
+    const fetchProduct = async () => {
+      try {
+        const res = await fetch(`/api/products/${routeId}`);
+        const data = await res.json();
+        if (data.success && data.product) {
+          const p = data.product;
+          setProduct({
+            id: p.id,
+            name: p.name,
+            sku: p.sku || "",
+            brand: p.brand || "SoundMaster",
+            category: p.category || "General",
+            price: Number(p.salePrice || p.price || 0),
+            originalPrice: Number(p.regularPrice || (p.price ? p.price * 1.25 : 0)),
+            rating: p.rating || 4.8,
+            reviewCount: p.reviewCount || 124,
+            stock: Number(p.stock || 0),
+            images: Array.isArray(p.images) && p.images.length > 0 
+              ? p.images 
+              : ["https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80"],
+            colors: Array.isArray(p.variants) && p.variants.length > 0
+              ? Array.from(new Set(p.variants.map((v: any) => v.color).filter(Boolean))) as string[]
+              : ["Space Gray", "Matte Black", "Silver"],
+            features: [
+              p.shortDescription || "High performance materials with superior durability.",
+              "100% Genuine and authentic product with manufacturer warranty.",
+              "Fast priority courier shipping available nationwide.",
+              "Easy 7-day hassle-free return and replacement policy."
+            ]
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch product by id:", err);
+      }
+    };
+    fetchProduct();
+  }, [routeId]);
 
   // Structured Data Schemas for SEO
   const productSchema = {
@@ -393,5 +437,20 @@ export default function ProductDetailPage() {
       {/* Smart Product Recommendation Engine */}
       <ProductRecommendation currentProductTitle="Gaming Mouse" />
     </div>
+  );
+}
+
+export default function ProductDetailPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="max-w-7xl mx-auto py-20 text-center space-y-3">
+          <span className="loading loading-spinner loading-lg text-primary"></span>
+          <p className="text-sm text-slate-500 font-medium">Loading product...</p>
+        </div>
+      }
+    >
+      <ProductDetailContent />
+    </Suspense>
   );
 }

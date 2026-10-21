@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { 
   Filter, 
   Search, 
@@ -14,9 +14,9 @@ import {
   ChevronDown 
 } from "lucide-react";
 
-const allProducts = [
+const initialProducts = [
   {
-    id: "1",
+    id: "prod-1",
     name: "Wireless Noise-Canceling Headphones",
     category: "Electronics",
     price: 199.99,
@@ -27,7 +27,7 @@ const allProducts = [
     inStock: true
   },
   {
-    id: "2",
+    id: "prod-2",
     name: "Ultra Smart Watch Series 7 Pro",
     category: "Gadgets",
     price: 149.00,
@@ -38,7 +38,7 @@ const allProducts = [
     inStock: true
   },
   {
-    id: "3",
+    id: "prod-3",
     name: "Ergonomic Mechanical Gaming Keyboard",
     category: "Accessories",
     price: 89.99,
@@ -49,18 +49,18 @@ const allProducts = [
     inStock: true
   },
   {
-    id: "4",
-    name: "Premium Leather Everyday Backpack",
+    id: "prod-4",
+    name: "Premium Cotton Crewneck T-Shirt",
     category: "Fashion",
-    price: 75.50,
+    price: 85.00,
     originalPrice: 95.00,
     rating: 4.6,
     reviews: 64,
-    image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500&auto=format&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500&auto=format&fit=crop&q=80",
     inStock: true
   },
   {
-    id: "5",
+    id: "prod-5",
     name: "Minimalist Wireless Optical Mouse",
     category: "Electronics",
     price: 29.99,
@@ -68,26 +68,49 @@ const allProducts = [
     rating: 4.5,
     reviews: 42,
     image: "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=500&auto=format&fit=crop&q=80",
-    inStock: true
-  },
-  {
-    id: "6",
-    name: "High Fidelity Portable Bluetooth Speaker",
-    category: "Electronics",
-    price: 119.00,
-    originalPrice: 159.00,
-    rating: 4.8,
-    reviews: 155,
-    image: "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=500&auto=format&fit=crop&q=80",
     inStock: false
   }
 ];
 
 export default function ProductsPage() {
+  const [productsList, setProductsList] = useState(initialProducts);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [priceRange, setPriceRange] = useState(250);
-  const [wishlistItems, setWishlistItems] = useState<string[]>(["1", "3", "5"]);
+  const [selectedCategory, setSelectedCategory] = useState("All Categories");
+  const [wishlistItems, setWishlistItems] = useState<string[]>(["prod-1", "prod-3"]);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchDbProducts = async () => {
+      try {
+        const res = await fetch("/api/products");
+        const data = await res.json();
+        if (data.success && Array.isArray(data.products) && data.products.length > 0) {
+          const mapped = data.products.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            category: p.category || "General",
+            price: Number(p.salePrice || p.price || 0),
+            originalPrice: Number(p.regularPrice || (p.price ? p.price * 1.2 : 0)),
+            rating: p.rating || 4.8,
+            reviews: p.reviewCount || 12,
+            image: Array.isArray(p.images) && p.images.length > 0 
+              ? p.images[0] 
+              : "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&auto=format&fit=crop&q=80",
+            inStock: p.stock > 0 && p.status !== "Out of Stock",
+          }));
+          setProductsList(mapped);
+        }
+      } catch (err) {
+        console.error("Failed to load products from API:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDbProducts();
+  }, []);
 
   const toggleWishlist = (id: string, name: string) => {
     if (wishlistItems.includes(id)) {
@@ -126,7 +149,7 @@ export default function ProductsPage() {
           </div>
         </div>
         <div className="text-sm font-semibold text-base-content/70">
-          Showing <span className="text-primary font-bold">{allProducts.length}</span> items
+          Showing <span className="text-primary font-bold">{productsList.length}</span> items
         </div>
       </div>
 
@@ -227,7 +250,7 @@ export default function ProductsPage() {
 
           {/* Product Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {allProducts.map((product) => (
+            {productsList.map((product) => (
               <div key={product.id} className="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md transition-all group rounded-2xl overflow-hidden">
                 <figure className="relative h-48 bg-base-200">
                   <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
