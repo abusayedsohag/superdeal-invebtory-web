@@ -212,6 +212,7 @@ export default function AdminProductsPage() {
         <table className="table w-full text-sm">
           <thead>
             <tr className="text-xs text-slate-500 uppercase bg-slate-50/50 border-b border-slate-200">
+              <th>Image</th>
               <th>Master SKU</th>
               <th>Product Name</th>
               <th>Category</th>
@@ -248,6 +249,13 @@ export default function AdminProductsPage() {
                 const isDeleting = deletingId === p.id;
                 return (
                   <tr key={p.id} className="hover:bg-slate-50/50">
+                    <td className="p-2">
+                      <img
+                        src={p.images}
+                        alt={p.name}
+                        className="object-cover w-12 h-12 rounded-xl"
+                      />
+                    </td>
                     <td className="font-mono text-xs text-slate-500 font-bold">{p.sku}</td>
                     <td>
                       <div className="font-bold text-slate-900 line-clamp-1">{p.name}</div>
@@ -260,9 +268,9 @@ export default function AdminProductsPage() {
                     <td className="text-xs text-slate-600">
                       <span className="badge badge-sm badge-ghost font-medium">{p.category}</span>
                     </td>
-                    <td className="text-slate-500">\${Number(p.costPrice || 0).toFixed(2)}</td>
+                    <td className="text-slate-500">${Number(p.costPrice || 0).toFixed(2)}</td>
                     <td className="font-extrabold text-slate-900">
-                      \${Number(p.price || 0).toFixed(2)}
+                      ${Number(p.price || 0).toFixed(2)}
                     </td>
                     <td>
                       <span className="badge badge-indigo badge-outline text-[11px] font-bold gap-1">
@@ -272,24 +280,22 @@ export default function AdminProductsPage() {
                     </td>
                     <td>
                       <span
-                        className={`font-bold ${
-                          p.stock <= 5 ? "text-error" : "text-slate-800"
-                        }`}
+                        className={`font-bold ${p.stock <= 5 ? "text-error" : "text-slate-800"
+                          }`}
                       >
                         {p.stock} units
                       </span>
                     </td>
                     <td>
                       <span
-                        className={`badge badge-sm font-bold ${
-                          p.status === "Active"
+                        className={`badge badge-sm font-bold ${p.status === "Active"
                             ? "badge-success text-white"
                             : p.status === "Low Stock"
-                            ? "badge-warning"
-                            : p.status === "Draft"
-                            ? "badge-neutral"
-                            : "badge-error text-white"
-                        }`}
+                              ? "badge-warning"
+                              : p.status === "Draft"
+                                ? "badge-neutral"
+                                : "badge-error text-white"
+                          }`}
                       >
                         {p.status}
                       </span>

@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/mongodb";
+import { adjustCategoryItemCount } from "@/lib/category-counter";
 import { ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
 
@@ -55,6 +56,8 @@ export async function PATCH(
       filter = { $or: [{ id }, { _id: new ObjectId(id) }] };
     }
 
+    const oldProduct = await collection.findOne(filter);
+
     const result = await collection.updateOne(filter, { $set: body });
 
     if (result.matchedCount === 0) {
@@ -62,6 +65,24 @@ export async function PATCH(
         { success: false, message: "Product not found" },
         { status: 404 }
       );
+    }
+
+    // Rebalance category item counts if category/subcategory changed
+    if (
+      oldProduct &&
+      ((body.category && body.category !== oldProduct.category) ||
+        (body.subcategory !== undefined && body.subcategory !== oldProduct.subcategory))
+    ) {
+      const newCategory = body.category || oldProduct.category;
+      const newSubcategory =
+        body.subcategory !== undefined ? body.subcategory : oldProduct.subcategory;
+
+      if (oldProduct.category) {
+        await adjustCategoryItemCount(oldProduct.category, oldProduct.subcategory, -1);
+      }
+      if (newCategory) {
+        await adjustCategoryItemCount(newCategory, newSubcategory, 1);
+      }
     }
 
     return NextResponse.json({
@@ -94,12 +115,24 @@ export async function DELETE(
       filter = { $or: [{ id }, { _id: new ObjectId(id) }] };
     }
 
+    // Fetch existing product to know its category & subcategory before deleting
+    const productToDelete = await collection.findOne(filter);
+
     const result = await collection.deleteOne(filter);
 
     if (result.deletedCount === 0) {
       return NextResponse.json(
         { success: false, message: "Product not found" },
         { status: 404 }
+      );
+    }
+
+    // Decrement category and subcategory item count
+    if (productToDelete && productToDelete.category) {
+      await adjustCategoryItemCount(
+        productToDelete.category,
+        productToDelete.subcategory,
+        -1
       );
     }
 

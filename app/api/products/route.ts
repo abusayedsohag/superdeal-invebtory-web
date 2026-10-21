@@ -1,5 +1,6 @@
 import { generateProductId } from "@/lib/product-idgen";
 import { getDb } from "@/lib/mongodb";
+import { adjustCategoryItemCount } from "@/lib/category-counter";
 import { ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
 
@@ -239,6 +240,11 @@ export async function POST(request: Request) {
 
     const result = await collection.insertOne(newProduct);
 
+    // Increment category & subcategory item count
+    if (newProduct.category) {
+      await adjustCategoryItemCount(newProduct.category, newProduct.subcategory, 1);
+    }
+
     return NextResponse.json({
       success: true,
       message: "Product created successfully",
@@ -312,6 +318,9 @@ export async function PATCH(request: Request) {
       filter = { $or: [{ id }, { _id: new ObjectId(id) }] };
     }
 
+    // If category or subcategory is changing, fetch the old product to adjust item counts
+    const oldProduct = await collection.findOne(filter);
+
     const result = await collection.updateOne(filter, { $set: updateFields });
 
     if (result.matchedCount === 0) {
@@ -319,6 +328,29 @@ export async function PATCH(request: Request) {
         { success: false, message: "Product not found" },
         { status: 404 }
       );
+    }
+
+    // Handle category/subcategory change itemCount rebalance
+    if (
+      oldProduct &&
+      ((updateFields.category && updateFields.category !== oldProduct.category) ||
+        (updateFields.subcategory !== undefined &&
+          updateFields.subcategory !== oldProduct.subcategory))
+    ) {
+      const newCategory = updateFields.category || oldProduct.category;
+      const newSubcategory =
+        updateFields.subcategory !== undefined
+          ? updateFields.subcategory
+          : oldProduct.subcategory;
+
+      // Decrement old
+      if (oldProduct.category) {
+        await adjustCategoryItemCount(oldProduct.category, oldProduct.subcategory, -1);
+      }
+      // Increment new
+      if (newCategory) {
+        await adjustCategoryItemCount(newCategory, newSubcategory, 1);
+      }
     }
 
     return NextResponse.json({
@@ -369,12 +401,24 @@ export async function DELETE(request: Request) {
       filter = { $or: [{ id }, { _id: new ObjectId(id) }] };
     }
 
+    // Fetch existing product to know its category & subcategory before deleting
+    const productToDelete = await collection.findOne(filter);
+
     const result = await collection.deleteOne(filter);
 
     if (result.deletedCount === 0) {
       return NextResponse.json(
         { success: false, message: "Product not found" },
         { status: 404 }
+      );
+    }
+
+    // Decrement category and subcategory item count
+    if (productToDelete && productToDelete.category) {
+      await adjustCategoryItemCount(
+        productToDelete.category,
+        productToDelete.subcategory,
+        -1
       );
     }
 

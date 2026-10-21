@@ -1,5 +1,6 @@
 import { generateCategoryId } from "@/lib/category-idgen";
 import { getDb } from "@/lib/mongodb";
+import { syncCategoryItemCounts } from '@/lib/category-counter';
 import { ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
 
@@ -29,11 +30,15 @@ interface Category {
     subcategories: Subcategory[];
 }
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
         const db = await getDb()
         const collection = db.collection("categories")
 
+        const { searchParams } = new URL(request.url);
+        if (searchParams.get('sync') === 'true') {
+          await syncCategoryItemCounts();
+        }
         const categories = await collection.find({}).toArray();
 
         return NextResponse.json({
