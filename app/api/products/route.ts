@@ -48,6 +48,7 @@ interface Product {
   minStock?: number;
   maxStock?: number;
   warehouse?: string;
+  warehouseStocks?: Record<string, number>;
   rackLocation?: string;
   variantsCount: number;
   variants?: Variant[];

@@ -32,12 +32,14 @@ function SidebarLinks() {
   const [counts, setCounts] = useState<{
     products: number;
     categories: number;
+    warehouses: number;
     lowStock: number;
     outOfStock: number;
     inventoryAlerts: number;
   }>({
     products: 0,
     categories: 0,
+    warehouses: 0,
     lowStock: 0,
     outOfStock: 0,
     inventoryAlerts: 0,
@@ -83,7 +85,13 @@ function SidebarLinks() {
       badgeColor: counts.inventoryAlerts > 0 ? "badge-error text-white" : "badge-success text-white" 
     },
     { label: "Barcode & POS", href: "/admin/barcode", icon: Barcode, badge: "POS", badgeColor: "badge-accent text-slate-950 font-black" },
-    { label: "Warehouses", href: "/admin/warehouses", icon: Building2, badge: "3 Hubs" },
+    { 
+      label: "Warehouses", 
+      href: "/admin/warehouses", 
+      icon: Building2, 
+      badge: counts.warehouses > 0 ? `${counts.warehouses} Hubs` : "3 Hubs",
+      badgeColor: "badge-ghost font-bold text-slate-300"
+    },
     { label: "Purchases", href: "/admin/purchases", icon: ShoppingBag },
     { label: "Suppliers", href: "/admin/suppliers", icon: Truck },
     { label: "Orders", href: "/admin/orders", icon: ShoppingCart, badge: "12 New", badgeColor: "badge-primary" },
