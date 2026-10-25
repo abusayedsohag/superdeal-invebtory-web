@@ -124,14 +124,14 @@ export default function CartPage() {
 
     if (code === "SUPER20") {
       if (subtotal < 50) {
-        setCouponError("SUPER20 requires a minimum subtotal of \$50.00!");
+        setCouponError("SUPER20 requires a minimum subtotal of ৳50.00!");
         return;
       }
       setAppliedCoupon({ code: "SUPER20", discount: 20, type: "fixed" });
       setCouponInput("");
     } else if (code === "MEGA50") {
       if (subtotal < 100) {
-        setCouponError("MEGA50 requires a minimum subtotal of \$100.00!");
+        setCouponError("MEGA50 requires a minimum subtotal of ৳100.00!");
         return;
       }
       setAppliedCoupon({ code: "MEGA50", discount: 50, type: "percent" });
@@ -277,8 +277,8 @@ export default function CartPage() {
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {[
-                  { id: "standard", name: "Standard Shipping", cost: subtotal >= 100 ? "FREE" : "\$15.00", desc: "3-5 Business Days" },
-                  { id: "express", name: "Express Air Delivery", cost: "\$25.00", desc: "1-2 Business Days" },
+                  { id: "standard", name: "Standard Shipping", cost: subtotal >= 100 ? "FREE" : "৳15.00", desc: "3-5 Business Days" },
+                  { id: "express", name: "Express Air Delivery", cost: "৳25.00", desc: "1-2 Business Days" },
                   { id: "pickup", name: "Store Pickup", cost: "FREE", desc: "Pick up at nearest hub" }
                 ].map((s) => (
                   <button
@@ -326,7 +326,7 @@ export default function CartPage() {
                 <div className="p-3 bg-success/10 border border-success/30 rounded-2xl flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2 text-success font-bold">
                     <CheckCircle2 className="w-4 h-4" />
-                    <span>Coupon <strong>{appliedCoupon.code}</strong> Applied! ({appliedCoupon.type === "fixed" ? `\$${appliedCoupon.discount} Off` : `${appliedCoupon.discount}% Off`})</span>
+                    <span>Coupon <strong>{appliedCoupon.code}</strong> Applied! ({appliedCoupon.type === "fixed" ? `৳${appliedCoupon.discount} Off` : `${appliedCoupon.discount}% Off`})</span>
                   </div>
                   <button onClick={removeCoupon} className="btn btn-ghost btn-xs text-error font-bold">Remove</button>
                 </div>

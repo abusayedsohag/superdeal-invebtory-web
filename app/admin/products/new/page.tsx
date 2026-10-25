@@ -935,7 +935,7 @@ function ProductForm() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-1">
-              <label className="text-xs font-bold uppercase text-slate-500">Purchase Price (\$)</label>
+              <label className="text-xs font-bold uppercase text-slate-500">Purchase Price (৳)</label>
               <input
                 type="number"
                 step="0.01"
@@ -946,7 +946,7 @@ function ProductForm() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold uppercase text-slate-500">Cost Price (\$)</label>
+              <label className="text-xs font-bold uppercase text-slate-500">Cost Price (৳)</label>
               <input
                 type="number"
                 step="0.01"
@@ -957,7 +957,7 @@ function ProductForm() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold uppercase text-slate-500">Regular Price (\$)</label>
+              <label className="text-xs font-bold uppercase text-slate-500">Regular Price (৳)</label>
               <input
                 type="number"
                 step="0.01"
@@ -968,7 +968,7 @@ function ProductForm() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold uppercase text-slate-500">Selling Price (\$)</label>
+              <label className="text-xs font-bold uppercase text-slate-500">Selling Price (৳)</label>
               <input
                 type="number"
                 step="0.01"
@@ -980,7 +980,7 @@ function ProductForm() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold uppercase text-slate-500">Wholesale Price (\$)</label>
+              <label className="text-xs font-bold uppercase text-slate-500">Wholesale Price (৳)</label>
               <input
                 type="number"
                 step="0.01"
@@ -1261,7 +1261,7 @@ function ProductForm() {
                     <th className="min-w-32">{currentAttr1Name} *</th>
                     <th className="min-w-32">{currentAttr2Name}</th>
                     <th className="min-w-32">Variant SKU</th>
-                    <th className="min-w-24">Price (\$)</th>
+                    <th className="min-w-24">Price (৳)</th>
                     <th className="min-w-24">Stock Qty</th>
                     <th className="min-w-32">Barcode</th>
                     <th className="text-right">Action</th>

@@ -102,7 +102,7 @@ export default function PaymentGatewayModal({
 
           <div className="flex items-center justify-between text-xs pt-2 border-t border-white/20 font-mono">
             <span>Invoice: <strong>{currentBrand.invoice}</strong></span>
-            <span className="text-base font-black">৳{(amount * 120).toFixed(0)} BDT ({amount.toFixed(2)} USD)</span>
+            <span className="text-base font-black">৳{(amount * 120).toFixed(0)} BDT</span>
           </div>
         </div>
 

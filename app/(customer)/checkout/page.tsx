@@ -340,24 +340,24 @@ export default function CheckoutPage() {
               <div className="flex justify-between items-center py-1">
                 <div>
                   <p className="font-bold text-base-content">Wireless Headphones</p>
-                  <p className="text-base-content/60">Qty: 1 × \$199.99</p>
+                  <p className="text-base-content/60">Qty: 1 × ৳199.99</p>
                 </div>
-                <span className="font-mono font-bold text-sm">\${(199.99).toFixed(2)}</span>
+                <span className="font-mono font-bold text-sm">৳{(199.99).toFixed(2)}</span>
               </div>
 
               <div className="flex justify-between items-center py-1">
                 <div>
                   <p className="font-bold text-base-content">Smart Watch Series 7</p>
-                  <p className="text-base-content/60">Qty: 2 × \$149.00</p>
+                  <p className="text-base-content/60">Qty: 2 × ৳149.00</p>
                 </div>
-                <span className="font-mono font-bold text-sm">\${(298.00).toFixed(2)}</span>
+                <span className="font-mono font-bold text-sm">৳{(298.00).toFixed(2)}</span>
               </div>
 
               <div className="divider my-1"></div>
 
               <div className="flex justify-between text-xs text-base-content/70">
                 <span>Subtotal</span>
-                <span className="font-mono font-bold text-base-content">\${(497.99).toFixed(2)}</span>
+                <span className="font-mono font-bold text-base-content">৳{(497.99).toFixed(2)}</span>
               </div>
 
               <div className="flex justify-between text-xs text-base-content/70">
@@ -367,19 +367,19 @@ export default function CheckoutPage() {
 
               <div className="flex justify-between text-xs text-base-content/70">
                 <span>Estimated Tax (5% VAT)</span>
-                <span className="font-mono font-bold text-base-content">\${(24.90).toFixed(2)}</span>
+                <span className="font-mono font-bold text-base-content">৳{(24.90).toFixed(2)}</span>
               </div>
 
               <div className="flex justify-between text-xs text-success font-bold">
                 <span>Coupon (SUPER20)</span>
-                <span className="font-mono">-\$20.00</span>
+                <span className="font-mono">-৳20.00</span>
               </div>
 
               <div className="divider my-1"></div>
 
               <div className="flex justify-between text-xl font-black text-base-content">
                 <span>Total Pay</span>
-                <span className="text-primary font-mono text-2xl">\${(502.89).toFixed(2)}</span>
+                <span className="text-primary font-mono text-2xl">৳{(502.89).toFixed(2)}</span>
               </div>
             </div>
 

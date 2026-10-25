@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Suspense } from "react";
+import { useEffect, useState, Suspense } from "react";
 import {
   LayoutDashboard,
   Package,
@@ -29,12 +29,59 @@ import {
 
 function SidebarLinks() {
   const pathname = usePathname();
+  const [counts, setCounts] = useState<{
+    products: number;
+    categories: number;
+    lowStock: number;
+    outOfStock: number;
+    inventoryAlerts: number;
+  }>({
+    products: 0,
+    categories: 0,
+    lowStock: 0,
+    outOfStock: 0,
+    inventoryAlerts: 0,
+  });
+
+  const fetchStats = async () => {
+    try {
+      const res = await fetch("/api/admin/stats", { cache: "no-store" });
+      const data = await res.json();
+      if (data.success && data.counts) {
+        setCounts(data.counts);
+      }
+    } catch (err) {
+      console.error("Failed to fetch sidebar counts:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchStats();
+  }, [pathname]);
 
   const menuItems = [
     { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-    { label: "Products", href: "/admin/products", icon: Package, badge: "142" },
-    { label: "Categories", href: "/admin/categories", icon: Grid },
-    { label: "Inventory", href: "/admin/inventory", icon: Boxes, badge: "Low: 4", badgeColor: "badge-error" },
+    { 
+      label: "Products", 
+      href: "/admin/products", 
+      icon: Package, 
+      badge: counts.products > 0 ? String(counts.products) : "0",
+      badgeColor: "badge-primary"
+    },
+    { 
+      label: "Categories", 
+      href: "/admin/categories", 
+      icon: Grid,
+      badge: counts.categories > 0 ? String(counts.categories) : "0",
+      badgeColor: "badge-secondary"
+    },
+    { 
+      label: "Inventory", 
+      href: "/admin/inventory", 
+      icon: Boxes, 
+      badge: counts.inventoryAlerts > 0 ? `Alert: ${counts.inventoryAlerts}` : "All Good", 
+      badgeColor: counts.inventoryAlerts > 0 ? "badge-error text-white" : "badge-success text-white" 
+    },
     { label: "Barcode & POS", href: "/admin/barcode", icon: Barcode, badge: "POS", badgeColor: "badge-accent text-slate-950 font-black" },
     { label: "Warehouses", href: "/admin/warehouses", icon: Building2, badge: "3 Hubs" },
     { label: "Purchases", href: "/admin/purchases", icon: ShoppingBag },

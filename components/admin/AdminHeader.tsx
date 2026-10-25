@@ -56,7 +56,7 @@ export default function AdminHeader({ onToggleMobileSidebar }: AdminHeaderProps)
               <ul className="divide-y divide-base-200 text-xs my-2">
                 <li className="py-1.5">
                   <p className="font-semibold text-base-content">New Order #ORD-8921</p>
-                  <p className="text-base-content/60 text-[10px]">Customer placed order \$450.00</p>
+                  <p className="text-base-content/60 text-[10px]">Customer placed order ৳450.00</p>
                 </li>
                 <li className="py-1.5">
                   <p className="font-semibold text-error">Low Stock Warning!</p>

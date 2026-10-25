@@ -167,7 +167,7 @@ export default function CustomerNavbar() {
           <div className="hidden lg:flex items-center gap-4 text-xs font-semibold text-primary">
             <span>🔥 Daily Flash Deals</span>
             <span>⚡ Up to 70% Off</span>
-            <span>🚚 Free Delivery over \$50</span>
+            <span>🚚 Free Delivery over ৳50</span>
           </div>
         </div>
       </div>

@@ -115,7 +115,7 @@ const todaysDeals = [
     rating: 4.9,
     reviews: 210,
     image: "https://images.unsplash.com/photo-1580481072645-022f9a6d83d0?w=500&auto=format&fit=crop&q=80",
-    badge: "Save \$110"
+    badge: "Save ৳110"
   }
 ];
 
@@ -381,7 +381,7 @@ const customerReviews = [
     name: "Sophia Martinez",
     role: "Tech Enthusiast",
     rating: 5,
-    comment: "The Flash Sale prices are unbeatable. I saved over \$100 on my smartwatch purchase. Highly recommend SuperDeal!",
+    comment: "The Flash Sale prices are unbeatable. I saved over ৳100 on my smartwatch purchase. Highly recommend SuperDeal!",
     avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80"
   },
   {
@@ -406,7 +406,7 @@ export default function CustomerHomePage() {
             <div className="p-2.5 sm:p-3 bg-primary/10 text-primary rounded-xl sm:rounded-2xl shrink-0"><Truck className="w-5 h-5 sm:w-6 sm:h-6" /></div>
             <div>
               <h4 className="font-bold text-xs sm:text-sm">Free Express Delivery</h4>
-              <p className="text-[11px] sm:text-xs text-base-content/60">On orders over \$50</p>
+              <p className="text-[11px] sm:text-xs text-base-content/60">On orders over ৳50</p>
             </div>
           </div>
           <div className="flex items-center gap-3 sm:gap-4">
@@ -770,7 +770,7 @@ export default function CustomerHomePage() {
           <div className="space-y-2 text-center md:text-left">
             <span className="badge badge-neutral font-extrabold text-xs">EXCLUSIVE PROMO</span>
             <h2 className="text-3xl md:text-4xl font-black">Use Coupon Code: <span className="bg-white text-orange-600 px-3 py-1 rounded-xl font-mono">SUPER20</span></h2>
-            <p className="text-white/90 text-sm">Save instant \$20 on any order exceeding \$50 at checkout!</p>
+            <p className="text-white/90 text-sm">Save instant ৳20 on any order exceeding ৳50 at checkout!</p>
           </div>
           <Link href="/products" className="btn btn-neutral btn-lg rounded-2xl font-bold px-8 shadow-md">
             Claim Coupon & Shop

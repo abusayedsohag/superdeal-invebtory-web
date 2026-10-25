@@ -21,7 +21,7 @@ const singleBanners = [
   {
     id: 2,
     title: "🔥 TODAY'S BEST DEALS & DISCOUNTS",
-    subtitle: "Save Extra \$50 On Orders Over \$150",
+    subtitle: "Save Extra ৳50 On Orders Over ৳150",
     desc: "Exclusive daily offers on laptops, mechanical keyboards, gaming gear, and lifestyle products.",
     badge: "DAILY DEALS",
     badgeColor: "bg-amber-500 text-slate-950 font-black",
@@ -34,7 +34,7 @@ const singleBanners = [
   {
     id: 3,
     title: "🎟️ MEGA COUPON CODE: SUPER20",
-    subtitle: "Get Instant \$20 Off On Your First Order",
+    subtitle: "Get Instant ৳20 Off On Your First Order",
     desc: "Use coupon code SUPER20 at checkout for instant savings. Free express shipping included on all eligible orders.",
     badge: "PROMO COUPON",
     badgeColor: "bg-emerald-500 text-white",

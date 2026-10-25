@@ -251,7 +251,7 @@ export default function AdminProductsPage() {
                   <tr key={p.id} className="hover:bg-slate-50/50">
                     <td className="p-2">
                       <img
-                        src={p.images}
+                        src={Array.isArray(p.images) ? p.images[0] : p.images || p.image || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200&auto=format&fit=crop&q=80"}
                         alt={p.name}
                         className="object-cover w-12 h-12 rounded-xl"
                       />
@@ -268,9 +268,9 @@ export default function AdminProductsPage() {
                     <td className="text-xs text-slate-600">
                       <span className="badge badge-sm badge-ghost font-medium">{p.category}</span>
                     </td>
-                    <td className="text-slate-500">${Number(p.costPrice || 0).toFixed(2)}</td>
-                    <td className="font-extrabold text-slate-900">
-                      ${Number(p.price || 0).toFixed(2)}
+                    <td className="text-slate-500 font-mono">৳{Number(p.costPrice || 0).toFixed(2)}</td>
+                    <td className="font-extrabold text-slate-900 font-mono">
+                      ৳{Number(p.price || 0).toFixed(2)}
                     </td>
                     <td>
                       <span className="badge badge-indigo badge-outline text-[11px] font-bold gap-1">
