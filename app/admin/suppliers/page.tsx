@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { 
   Building2, 
   User, 
@@ -25,10 +25,12 @@ import {
   History,
   Receipt,
   ArrowDownRight,
-  Printer
+  Printer,
+  RefreshCw,
+  Save
 } from "lucide-react";
 
-interface PaymentHistoryEntry {
+export interface PaymentHistoryEntry {
   id: string;
   date: string;
   amount: number;
@@ -38,8 +40,9 @@ interface PaymentHistoryEntry {
   remainingDue: number;
 }
 
-interface Supplier {
+export interface Supplier {
   id: string;
+  _id?: string;
   companyName: string;
   contactPerson: string;
   designation: string;
@@ -55,101 +58,9 @@ interface Supplier {
 }
 
 export default function AdminSuppliersPage() {
-  const [suppliers, setSuppliers] = useState<Supplier[]>([
-    {
-      id: "SUP-001",
-      companyName: "ABC Electronics Ltd",
-      contactPerson: "Michael Scott",
-      designation: "Sales Director",
-      phone: "+880 1711-889900",
-      email: "sales@abcelectronics.com",
-      address: "Level 5, Motijheel Commercial Area, Dhaka",
-      products: ["Wireless Mice", "Mechanical Keyboards", "Fast Cables"],
-      totalPurchase: 100000,
-      paid: 60000,
-      due: 40000,
-      status: "Active",
-      paymentHistory: [
-        {
-          id: "PAY-9001",
-          date: "02 Oct 2026, 11:30 AM",
-          amount: 40000,
-          paymentMethod: "Bank Transfer",
-          referenceNo: "TRX-8891230",
-          note: "Advance payment on PO placement",
-          remainingDue: 60000
-        },
-        {
-          id: "PAY-9002",
-          date: "08 Oct 2026, 03:15 PM",
-          amount: 20000,
-          paymentMethod: "bKash Merchant",
-          referenceNo: "BK-7749102",
-          note: "Partial payment upon shipment arrival",
-          remainingDue: 40000
-        }
-      ]
-    },
-    {
-      id: "SUP-002",
-      companyName: "Global Tech Supplies & Components",
-      contactPerson: "Sarah Hossain",
-      designation: "Account Manager",
-      phone: "+880 1819-223344",
-      email: "info@globaltechbd.com",
-      address: "Agrabad Commercial Area, Chittagong",
-      products: ["Ultra Smart Watches", "Bluetooth Speakers", "4K Webcams"],
-      totalPurchase: 1800000,
-      paid: 1800000,
-      due: 0,
-      status: "Active",
-      paymentHistory: [
-        {
-          id: "PAY-8001",
-          date: "01 Sep 2026, 10:00 AM",
-          amount: 1000000,
-          paymentMethod: "Bank Transfer",
-          referenceNo: "TRX-109283",
-          note: "Initial procurement installment",
-          remainingDue: 800000
-        },
-        {
-          id: "PAY-8002",
-          date: "20 Sep 2026, 04:30 PM",
-          amount: 800000,
-          paymentMethod: "Cheque",
-          referenceNo: "CHQ-0091823",
-          note: "Final ledger settlement",
-          remainingDue: 0
-        }
-      ]
-    },
-    {
-      id: "SUP-003",
-      companyName: "Trend Apparel & Textile Mills",
-      contactPerson: "David Miller",
-      designation: "Export Manager",
-      phone: "+880 1733-445566",
-      email: "orders@trendapparel.com",
-      address: "Plot 12, EPZ Area, Savar, Dhaka",
-      products: ["Cotton T-Shirts", "Denim Jeans", "Winter Hoodies"],
-      totalPurchase: 950000,
-      paid: 700000,
-      due: 250000,
-      status: "Active",
-      paymentHistory: [
-        {
-          id: "PAY-7001",
-          date: "15 Sep 2026, 02:00 PM",
-          amount: 700000,
-          paymentMethod: "Bank Transfer",
-          referenceNo: "TRX-445109",
-          note: "Bulk apparel deposit",
-          remainingDue: 250000
-        }
-      ]
-    }
-  ]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [filterDue, setFilterDue] = useState("all");
@@ -163,8 +74,11 @@ export default function AdminSuppliersPage() {
   const [payMethod, setPayMethod] = useState<"Bank Transfer" | "bKash Merchant" | "Nagad" | "Cheque" | "Cash">("Bank Transfer");
   const [payRef, setPayRef] = useState<string>("");
   const [payNote, setPayNote] = useState<string>("");
+  const [submittingPayment, setSubmittingPayment] = useState(false);
 
   // New Supplier Form State
+  const [isSubmittingSupplier, setIsSubmittingSupplier] = useState(false);
+  const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [newSupplier, setNewSupplier] = useState({
     companyName: "",
     contactPerson: "",
@@ -177,68 +91,60 @@ export default function AdminSuppliersPage() {
     paid: 0
   });
 
+  // Fetch Suppliers from MongoDB
+  const fetchSuppliers = async (isManual = false) => {
+    if (isManual) setRefreshing(true);
+    else setLoading(true);
+
+    try {
+      const res = await fetch("/api/suppliers", { cache: "no-store" });
+      const data = await res.json();
+      if (data.success && Array.isArray(data.suppliers)) {
+        setSuppliers(data.suppliers);
+        // If a supplier is currently selected, update its reference
+        if (selectedSupplier) {
+          const fresh = data.suppliers.find((s: Supplier) => s.id === selectedSupplier.id);
+          if (fresh) setSelectedSupplier(fresh);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch suppliers:", err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSuppliers();
+  }, []);
+
   // Calculate Aggregates
   const totalSuppliersCount = suppliers.length;
-  const aggregatePurchase = suppliers.reduce((acc, curr) => acc + curr.totalPurchase, 0);
-  const aggregatePaid = suppliers.reduce((acc, curr) => acc + curr.paid, 0);
-  const aggregateDue = suppliers.reduce((acc, curr) => acc + curr.due, 0);
+  const aggregatePurchase = useMemo(() => suppliers.reduce((acc, curr) => acc + (Number(curr.totalPurchase) || 0), 0), [suppliers]);
+  const aggregatePaid = useMemo(() => suppliers.reduce((acc, curr) => acc + (Number(curr.paid) || 0), 0), [suppliers]);
+  const aggregateDue = useMemo(() => suppliers.reduce((acc, curr) => acc + (Number(curr.due) || 0), 0), [suppliers]);
 
   // Filter Logic
-  const filteredSuppliers = suppliers.filter((sup) => {
-    const matchesQuery = 
-      sup.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      sup.contactPerson.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      sup.phone.includes(searchQuery) ||
-      sup.products.some(p => p.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredSuppliers = useMemo(() => {
+    return suppliers.filter((sup) => {
+      const q = searchQuery.toLowerCase().trim();
+      const matchesQuery = 
+        q === "" ||
+        sup.companyName.toLowerCase().includes(q) ||
+        sup.contactPerson.toLowerCase().includes(q) ||
+        sup.phone.includes(q) ||
+        (Array.isArray(sup.products) && sup.products.some(p => p.toLowerCase().includes(q)));
 
-    if (filterDue === "has_due") return matchesQuery && sup.due > 0;
-    if (filterDue === "paid") return matchesQuery && sup.due === 0;
-    return matchesQuery;
-  });
+      if (filterDue === "has_due") return matchesQuery && sup.due > 0;
+      if (filterDue === "paid") return matchesQuery && sup.due === 0;
+      return matchesQuery;
+    });
+  }, [suppliers, searchQuery, filterDue]);
 
-  // Add Supplier Handler
-  const handleAddSupplier = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newSupplier.companyName || !newSupplier.contactPerson || !newSupplier.phone) return;
-
-    const productsArray = newSupplier.productsInput
-      ? newSupplier.productsInput.split(",").map(s => s.trim()).filter(Boolean)
-      : ["General Merchandise"];
-
-    const purchaseNum = Number(newSupplier.totalPurchase) || 0;
-    const paidNum = Number(newSupplier.paid) || 0;
-    const dueNum = Math.max(0, purchaseNum - paidNum);
-
-    const initialHistory: PaymentHistoryEntry[] = paidNum > 0 ? [
-      {
-        id: `PAY-${Date.now().toString().slice(-4)}`,
-        date: new Date().toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }),
-        amount: paidNum,
-        paymentMethod: "Bank Transfer",
-        referenceNo: "INIT-OPENING",
-        note: "Initial opening balance payment",
-        remainingDue: dueNum
-      }
-    ] : [];
-
-    const created: Supplier = {
-      id: `SUP-00${suppliers.length + 1}`,
-      companyName: newSupplier.companyName,
-      contactPerson: newSupplier.contactPerson,
-      designation: newSupplier.designation || "Vendor Representative",
-      phone: newSupplier.phone,
-      email: newSupplier.email || "info@vendor.com",
-      address: newSupplier.address || "Dhaka, Bangladesh",
-      products: productsArray,
-      totalPurchase: purchaseNum,
-      paid: paidNum,
-      due: dueNum,
-      status: "Active",
-      paymentHistory: initialHistory
-    };
-
-    setSuppliers(prev => [created, ...prev]);
-    setIsAddModalOpen(false);
+  // Open Add Modal
+  const handleOpenAddModal = () => {
+    setEditingSupplier(null);
     setNewSupplier({
       companyName: "",
       contactPerson: "",
@@ -250,43 +156,135 @@ export default function AdminSuppliersPage() {
       totalPurchase: 0,
       paid: 0
     });
+    setIsAddModalOpen(true);
   };
 
-  // Payment Recording Handler with Payment History Log
-  const handleMakePayment = () => {
-    if (!selectedSupplier || payAmount <= 0) return;
-    
-    const newPaidTotal = selectedSupplier.paid + payAmount;
-    const newDueTotal = Math.max(0, selectedSupplier.totalPurchase - newPaidTotal);
+  // Open Edit Modal
+  const handleOpenEditModal = (sup: Supplier) => {
+    setEditingSupplier(sup);
+    setNewSupplier({
+      companyName: sup.companyName,
+      contactPerson: sup.contactPerson,
+      designation: sup.designation,
+      phone: sup.phone,
+      email: sup.email,
+      address: sup.address,
+      productsInput: Array.isArray(sup.products) ? sup.products.join(", ") : "",
+      totalPurchase: sup.totalPurchase,
+      paid: sup.paid
+    });
+    setIsAddModalOpen(true);
+  };
 
-    const historyRecord: PaymentHistoryEntry = {
-      id: `PAY-${Math.floor(1000 + Math.random() * 9000)}`,
-      date: new Date().toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }),
-      amount: payAmount,
-      paymentMethod: payMethod,
-      referenceNo: payRef || `TRX-${Math.floor(100000 + Math.random() * 900000)}`,
-      note: payNote || "Supplier Due Settlement",
-      remainingDue: newDueTotal
-    };
+  // Add / Edit Supplier in DB
+  const handleSaveSupplier = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSupplier.companyName || !newSupplier.contactPerson || !newSupplier.phone) {
+      alert("Please enter Company Name, Contact Person, and Phone.");
+      return;
+    }
 
-    setSuppliers(prev => prev.map(s => {
-      if (s.id === selectedSupplier.id) {
-        const updated = {
-          ...s,
-          paid: newPaidTotal,
-          due: newDueTotal,
-          paymentHistory: [historyRecord, ...s.paymentHistory]
-        };
-        setSelectedSupplier(updated);
-        return updated;
+    setIsSubmittingSupplier(true);
+    try {
+      const isEdit = Boolean(editingSupplier);
+      const url = "/api/suppliers";
+      const method = isEdit ? "PATCH" : "POST";
+      const body = isEdit
+        ? {
+            id: editingSupplier?.id,
+            companyName: newSupplier.companyName,
+            contactPerson: newSupplier.contactPerson,
+            designation: newSupplier.designation,
+            phone: newSupplier.phone,
+            email: newSupplier.email,
+            address: newSupplier.address,
+            productsInput: newSupplier.productsInput,
+            totalPurchase: Number(newSupplier.totalPurchase) || 0,
+            paid: Number(newSupplier.paid) || 0,
+          }
+        : newSupplier;
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setIsAddModalOpen(false);
+        await fetchSuppliers(true);
+      } else {
+        alert(data.message || "Failed to save supplier");
       }
-      return s;
-    }));
+    } catch (err) {
+      console.error("Error saving supplier:", err);
+      alert("Error saving supplier");
+    } finally {
+      setIsSubmittingSupplier(false);
+    }
+  };
 
-    setIsPayModalOpen(false);
-    setPayAmount(0);
-    setPayRef("");
-    setPayNote("");
+  // Delete Supplier from DB
+  const handleDeleteSupplier = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete supplier '${name}'?`)) return;
+
+    try {
+      const res = await fetch(`/api/suppliers?id=${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (data.success) {
+        setSuppliers(prev => prev.filter(s => s.id !== id));
+        if (selectedSupplier?.id === id) setSelectedSupplier(null);
+      } else {
+        alert(data.message || "Failed to delete supplier");
+      }
+    } catch (err) {
+      console.error("Delete supplier error:", err);
+      alert("Failed to delete supplier");
+    }
+  };
+
+  // Make Payment in DB
+  const handleMakePayment = async () => {
+    if (!selectedSupplier || payAmount <= 0) {
+      alert("Please enter a valid payment amount greater than 0");
+      return;
+    }
+
+    setSubmittingPayment(true);
+    try {
+      const res = await fetch("/api/suppliers", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: selectedSupplier.id,
+          action: "make_payment",
+          payment: {
+            amount: payAmount,
+            paymentMethod: payMethod,
+            referenceNo: payRef || `TRX-${Date.now().toString().slice(-6)}`,
+            note: payNote || "Supplier Due Settlement",
+          },
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success && data.supplier) {
+        setSelectedSupplier(data.supplier);
+        setSuppliers(prev => prev.map(s => s.id === data.supplier.id ? data.supplier : s));
+        setIsPayModalOpen(false);
+        setPayAmount(0);
+        setPayRef("");
+        setPayNote("");
+      } else {
+        alert(data.message || "Failed to record payment");
+      }
+    } catch (err) {
+      console.error("Payment error:", err);
+      alert("Failed to record payment");
+    } finally {
+      setSubmittingPayment(false);
+    }
   };
 
   return (
@@ -298,15 +296,26 @@ export default function AdminSuppliersPage() {
             <Wallet className="w-8 h-8 text-primary" /> Supplier Due Management
           </h1>
           <p className="text-xs text-slate-500">
-            Track vendor purchase totals, paid amounts, due balances, and full payment transaction histories
+            Track vendor purchase totals, paid amounts, due balances, and full payment transaction histories in MongoDB
           </p>
         </div>
-        <button 
-          onClick={() => setIsAddModalOpen(true)}
-          className="btn btn-primary btn-sm gap-2 font-bold shadow-md rounded-xl"
-        >
-          <Plus className="w-4 h-4" /> Add New Supplier
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => fetchSuppliers(true)}
+            disabled={refreshing || loading}
+            className="btn btn-outline btn-sm gap-1.5"
+            title="Reload live suppliers from database"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
+            Refresh
+          </button>
+          <button 
+            onClick={handleOpenAddModal}
+            className="btn btn-primary btn-sm gap-2 font-bold shadow-md rounded-xl"
+          >
+            <Plus className="w-4 h-4" /> Add New Supplier
+          </button>
+        </div>
       </div>
 
       {/* KPI METRIC CARDS */}
@@ -314,7 +323,9 @@ export default function AdminSuppliersPage() {
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
             <p className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Total Suppliers</p>
-            <h3 className="text-2xl font-black text-slate-900 mt-1">{totalSuppliersCount}</h3>
+            <h3 className="text-2xl font-black text-slate-900 mt-1">
+              {loading ? <span className="loading loading-spinner loading-sm"></span> : totalSuppliersCount}
+            </h3>
             <p className="text-[11px] text-slate-500 mt-0.5">Active Vendor Partners</p>
           </div>
           <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center">
@@ -325,25 +336,23 @@ export default function AdminSuppliersPage() {
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
             <p className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Total Purchases</p>
-            <h3 className="text-2xl font-black text-slate-900 font-mono mt-1">
-              ৳{aggregatePurchase.toLocaleString()}
+            <h3 className="text-2xl font-black text-slate-900 mt-1">
+              {loading ? <span className="loading loading-spinner loading-sm"></span> : `৳${aggregatePurchase.toLocaleString()}`}
             </h3>
-            <p className="text-[11px] text-slate-500 mt-0.5">Total Vendor Invoices</p>
+            <p className="text-[11px] text-slate-500 mt-0.5">Cumulative Invoiced</p>
           </div>
           <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center">
-            <TrendingUp className="w-6 h-6" />
+            <Package className="w-6 h-6" />
           </div>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
-            <p className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Total Paid</p>
-            <h3 className="text-2xl font-black text-emerald-600 font-mono mt-1">
-              ৳{aggregatePaid.toLocaleString()}
+            <p className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Total Amount Paid</p>
+            <h3 className="text-2xl font-black text-emerald-600 mt-1">
+              {loading ? <span className="loading loading-spinner loading-sm"></span> : `৳${aggregatePaid.toLocaleString()}`}
             </h3>
-            <p className="text-[11px] text-emerald-700 font-bold mt-0.5">
-              {((aggregatePaid / (aggregatePurchase || 1)) * 100).toFixed(1)}% Settled
-            </p>
+            <p className="text-[11px] text-emerald-600 font-semibold mt-0.5">Settled Vendor Claims</p>
           </div>
           <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center">
             <CheckCircle2 className="w-6 h-6" />
@@ -352,28 +361,28 @@ export default function AdminSuppliersPage() {
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
-            <p className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Total Due Balance</p>
-            <h3 className="text-2xl font-black text-amber-600 font-mono mt-1">
-              ৳{aggregateDue.toLocaleString()}
+            <p className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Total Outstanding Due</p>
+            <h3 className="text-2xl font-black text-amber-500 mt-1">
+              {loading ? <span className="loading loading-spinner loading-sm"></span> : `৳${aggregateDue.toLocaleString()}`}
             </h3>
-            <p className="text-[11px] text-amber-700 font-bold mt-0.5">Outstanding Liability</p>
+            <p className="text-[11px] text-amber-600 font-bold mt-0.5">Payable Balance</p>
           </div>
-          <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center">
+          <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center">
             <AlertCircle className="w-6 h-6" />
           </div>
         </div>
       </div>
 
-      {/* SEARCH AND FILTER BAR */}
+      {/* FILTER & SEARCH BAR */}
       <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Search company, contact, or phone..."
+        <div className="relative w-full sm:w-96">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input 
+            type="text" 
+            placeholder="Search by company, contact person, phone or product..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="input input-sm input-bordered w-full pl-9 text-xs focus:outline-none rounded-xl"
+            className="input input-sm input-bordered pl-9 w-full rounded-xl text-xs focus:outline-none"
           />
         </div>
 
@@ -382,111 +391,151 @@ export default function AdminSuppliersPage() {
           <select 
             value={filterDue}
             onChange={(e) => setFilterDue(e.target.value)}
-            className="select select-sm select-bordered text-xs focus:outline-none rounded-xl font-bold"
+            className="select select-sm select-bordered rounded-xl text-xs focus:outline-none"
           >
-            <option value="all">All Payment Statuses</option>
-            <option value="has_due">Outstanding Dues Only</option>
-            <option value="paid">Fully Paid Only</option>
+            <option value="all">All Suppliers ({suppliers.length})</option>
+            <option value="has_due">Has Outstanding Due</option>
+            <option value="paid">Fully Settled (৳0 Due)</option>
           </select>
         </div>
       </div>
 
-      {/* SUPPLIERS TABLE */}
+      {/* SUPPLIERS DIRECTORY TABLE */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-x-auto">
-        <table className="table w-full text-sm">
+        <table className="table w-full text-xs">
           <thead>
-            <tr className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
-              <th>Supplier / Company</th>
-              <th>Contact Representative</th>
+            <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-extrabold uppercase">
+              <th>Supplier Info</th>
+              <th>Contact Person</th>
+              <th>Supplied Products</th>
               <th className="text-right">Total Purchase</th>
-              <th className="text-right">Paid Amount</th>
+              <th className="text-right">Paid</th>
               <th className="text-right">Due Balance</th>
-              <th className="text-center">Payment History Log</th>
+              <th className="text-center">Ledger History</th>
               <th className="text-center">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {filteredSuppliers.map((sup) => (
-              <tr key={sup.id} className="hover:bg-slate-50/50">
-                <td>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center font-black text-primary">
-                      {sup.companyName.substring(0, 2).toUpperCase()}
-                    </div>
+            {loading ? (
+              <tr>
+                <td colSpan={8} className="py-12 text-center text-slate-400">
+                  <span className="loading loading-spinner loading-md text-primary"></span>
+                  <p className="mt-2 text-xs">Loading suppliers from MongoDB...</p>
+                </td>
+              </tr>
+            ) : filteredSuppliers.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="text-center py-12 text-slate-400">
+                  <Building2 className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                  No suppliers found matching your query.
+                </td>
+              </tr>
+            ) : (
+              filteredSuppliers.map((sup) => (
+                <tr key={sup.id} className="hover:bg-slate-50/60">
+                  <td>
                     <div>
-                      <p className="font-extrabold text-slate-900 text-sm">{sup.companyName}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">{sup.phone}</p>
+                      <span className="font-extrabold text-sm text-slate-900 block">{sup.companyName}</span>
+                      <span className="font-mono text-[10px] text-slate-400">{sup.id}</span>
                     </div>
-                  </div>
-                </td>
+                  </td>
 
-                <td>
-                  <p className="font-bold text-slate-800 text-xs flex items-center gap-1">
-                    <User className="w-3.5 h-3.5 text-primary" /> {sup.contactPerson}
-                  </p>
-                  <p className="text-[11px] text-slate-400">{sup.designation}</p>
-                </td>
+                  <td>
+                    <div className="space-y-0.5">
+                      <p className="font-bold text-slate-800 flex items-center gap-1">
+                        <User className="w-3 h-3 text-slate-400" /> {sup.contactPerson}
+                      </p>
+                      <p className="text-slate-500 font-mono text-[11px] flex items-center gap-1">
+                        <Phone className="w-3 h-3 text-slate-400" /> {sup.phone}
+                      </p>
+                    </div>
+                  </td>
 
-                <td className="text-right font-mono font-extrabold text-slate-900 text-base">
-                  ৳{sup.totalPurchase.toLocaleString()}
-                </td>
+                  <td>
+                    <div className="flex flex-wrap gap-1 max-w-xs">
+                      {Array.isArray(sup.products) && sup.products.map((p, i) => (
+                        <span key={i} className="badge badge-xs badge-ghost font-medium">
+                          {p}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
 
-                <td className="text-right font-mono font-bold text-emerald-600 text-base">
-                  ৳{sup.paid.toLocaleString()}
-                </td>
+                  <td className="text-right font-mono font-bold text-slate-900">
+                    ৳{sup.totalPurchase.toLocaleString()}
+                  </td>
 
-                <td className="text-right">
-                  {sup.due > 0 ? (
-                    <span className="badge badge-error text-white font-mono font-extrabold text-xs px-2.5 py-1">
-                      ৳{sup.due.toLocaleString()} DUE
+                  <td className="text-right font-mono font-bold text-emerald-600">
+                    ৳{sup.paid.toLocaleString()}
+                  </td>
+
+                  <td className="text-right">
+                    <span className={`font-mono font-black text-sm px-2 py-0.5 rounded-lg ${
+                      sup.due > 0 ? "bg-amber-50 text-amber-600 border border-amber-200" : "text-slate-400"
+                    }`}>
+                      ৳{sup.due.toLocaleString()}
                     </span>
-                  ) : (
-                    <span className="badge badge-success text-white font-mono font-bold text-xs px-2.5 py-1">
-                      PAID IN FULL
-                    </span>
-                  )}
-                </td>
+                  </td>
 
-                <td className="text-center">
-                  <button
-                    onClick={() => {
-                      setSelectedSupplier(sup);
-                      setActiveTab("history");
-                    }}
-                    className="btn btn-xs btn-ghost gap-1 font-bold text-slate-600 hover:text-primary"
-                  >
-                    <History className="w-3.5 h-3.5 text-primary" /> {sup.paymentHistory.length} Payments Logged
-                  </button>
-                </td>
-
-                <td className="text-center">
-                  <div className="flex items-center justify-center gap-1.5">
+                  <td className="text-center">
                     <button
                       onClick={() => {
                         setSelectedSupplier(sup);
-                        setActiveTab("overview");
+                        setActiveTab("history");
                       }}
-                      className="btn btn-xs btn-primary gap-1 font-bold rounded-lg"
+                      className="btn btn-xs btn-ghost gap-1 font-bold text-slate-600 hover:text-primary"
                     >
-                      <Eye className="w-3.5 h-3.5" /> Details
+                      <History className="w-3.5 h-3.5 text-primary" /> {sup.paymentHistory?.length || 0} Payments
                     </button>
+                  </td>
 
-                    {sup.due > 0 && (
+                  <td className="text-center">
+                    <div className="flex items-center justify-center gap-1">
                       <button
                         onClick={() => {
                           setSelectedSupplier(sup);
-                          setPayAmount(sup.due);
-                          setIsPayModalOpen(true);
+                          setActiveTab("overview");
                         }}
-                        className="btn btn-xs btn-warning text-slate-900 gap-1 font-bold rounded-lg"
+                        className="btn btn-xs btn-primary gap-1 font-bold rounded-lg"
+                        title="View details"
                       >
-                        <Wallet className="w-3.5 h-3.5" /> Pay Due
+                        <Eye className="w-3.5 h-3.5" /> Details
                       </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
+
+                      {sup.due > 0 && (
+                        <button
+                          onClick={() => {
+                            setSelectedSupplier(sup);
+                            setPayAmount(sup.due);
+                            setIsPayModalOpen(true);
+                          }}
+                          className="btn btn-xs btn-warning text-slate-900 gap-1 font-bold rounded-lg"
+                          title="Record payment"
+                        >
+                          <Wallet className="w-3.5 h-3.5" /> Pay Due
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => handleOpenEditModal(sup)}
+                        className="btn btn-xs btn-ghost text-slate-500 hover:text-primary"
+                        title="Edit supplier"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                      </button>
+
+                      <button
+                        onClick={() => handleDeleteSupplier(sup.id, sup.companyName)}
+                        className="btn btn-xs btn-ghost text-slate-400 hover:text-error"
+                        title="Delete supplier"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -530,7 +579,7 @@ export default function AdminSuppliersPage() {
                     : "border-transparent text-slate-500 hover:text-slate-800"
                 }`}
               >
-                <History className="w-4 h-4 text-primary" /> Supplier Payment History ({selectedSupplier.paymentHistory.length})
+                <History className="w-4 h-4 text-primary" /> Supplier Payment History ({selectedSupplier.paymentHistory?.length || 0})
               </button>
             </div>
 
@@ -548,179 +597,174 @@ export default function AdminSuppliersPage() {
                     <p className="font-mono font-black text-emerald-600 text-xl mt-0.5">৳{selectedSupplier.paid.toLocaleString()}</p>
                   </div>
                   <div>
-                    <span className="text-[11px] font-bold text-amber-600 uppercase block">Current Due</span>
-                    <p className="font-mono font-black text-amber-600 text-xl mt-0.5">৳{selectedSupplier.due.toLocaleString()}</p>
+                    <span className="text-[11px] font-bold text-amber-600 uppercase block">Outstanding Due</span>
+                    <p className="font-mono font-black text-amber-500 text-xl mt-0.5">৳{selectedSupplier.due.toLocaleString()}</p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                    <h4 className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
-                      <User className="w-4 h-4 text-primary" /> Supplier Contact Details
-                    </h4>
-                    <p><strong>Name:</strong> {selectedSupplier.contactPerson}</p>
-                    <p><strong>Designation:</strong> {selectedSupplier.designation}</p>
-                    <p><strong>Phone:</strong> {selectedSupplier.phone}</p>
-                    <p><strong>Email:</strong> {selectedSupplier.email}</p>
+                {/* Vendor Contact & Address Info */}
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 text-xs">
+                  <h4 className="font-extrabold text-slate-900">Contact & Address Details</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-slate-600">
+                    <p className="flex items-center gap-2"><Mail className="w-4 h-4 text-primary shrink-0" /> {selectedSupplier.email}</p>
+                    <p className="flex items-center gap-2"><Phone className="w-4 h-4 text-primary shrink-0" /> {selectedSupplier.phone}</p>
+                    <p className="flex items-center gap-2 col-span-2"><MapPin className="w-4 h-4 text-primary shrink-0" /> {selectedSupplier.address}</p>
                   </div>
+                </div>
 
-                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                    <h4 className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
-                      <MapPin className="w-4 h-4 text-primary" /> Office Address
-                    </h4>
-                    <p className="text-slate-700 font-medium">{selectedSupplier.address}</p>
+                {/* Supplied Items Chips */}
+                <div className="space-y-1.5">
+                  <span className="text-xs font-bold text-slate-700 block">Catalog Products Supplied:</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Array.isArray(selectedSupplier.products) && selectedSupplier.products.map((p, idx) => (
+                      <span key={idx} className="badge badge-md badge-outline font-bold text-primary border-primary/30">
+                        {p}
+                      </span>
+                    ))}
                   </div>
                 </div>
               </div>
             )}
 
-            {/* TAB 2: SUPPLIER PAYMENT HISTORY LOG */}
+            {/* TAB 2: PAYMENT HISTORY LOG */}
             {activeTab === "history" && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-black text-slate-900 text-sm flex items-center gap-1.5">
-                    <History className="w-4 h-4 text-primary" /> Supplier Payment Audit Trail & History
+                  <h4 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                    <Receipt className="w-4 h-4 text-primary" /> Payment Transactions Audit Trail
                   </h4>
                   {selectedSupplier.due > 0 && (
-                    <button 
+                    <button
                       onClick={() => {
                         setPayAmount(selectedSupplier.due);
                         setIsPayModalOpen(true);
                       }}
-                      className="btn btn-xs btn-warning text-slate-900 font-bold rounded-lg gap-1"
+                      className="btn btn-xs btn-primary font-bold gap-1 rounded-xl"
                     >
-                      <Plus className="w-3 h-3" /> Add Payment Record
+                      <Plus className="w-3.5 h-3.5" /> Make New Payment
                     </button>
                   )}
                 </div>
 
-                {selectedSupplier.paymentHistory.length === 0 ? (
-                  <div className="text-center py-8 text-slate-400 text-xs">
-                    No payment transaction records logged yet for this supplier.
+                {!selectedSupplier.paymentHistory || selectedSupplier.paymentHistory.length === 0 ? (
+                  <div className="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-xs text-slate-400">
+                    No payment transactions recorded for this supplier yet.
                   </div>
                 ) : (
-                  <div className="border border-slate-200 rounded-2xl overflow-hidden text-xs">
-                    <table className="w-full text-left">
-                      <thead>
-                        <tr className="bg-slate-50 text-slate-500 uppercase border-b border-slate-200 text-[11px] font-bold">
-                          <th className="py-2.5 px-3">Date & Time</th>
-                          <th className="py-2.5 px-3">Method</th>
-                          <th className="py-2.5 px-3">Reference / TRX</th>
-                          <th className="py-2.5 px-3 text-right">Amount Paid</th>
-                          <th className="py-2.5 px-3 text-right">Remaining Due</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100 text-slate-800">
-                        {selectedSupplier.paymentHistory.map((tx) => (
-                          <tr key={tx.id} className="hover:bg-slate-50/50">
-                            <td className="py-2.5 px-3 font-medium text-slate-600">{tx.date}</td>
-                            <td className="py-2.5 px-3">
-                              <span className="badge badge-sm badge-outline font-bold text-slate-800">
-                                {tx.paymentMethod}
-                              </span>
-                            </td>
-                            <td className="py-2.5 px-3 font-mono font-bold text-slate-700">
-                              {tx.referenceNo}
-                              {tx.note && <span className="block text-[10px] text-slate-400 font-sans font-normal">{tx.note}</span>}
-                            </td>
-                            <td className="py-2.5 px-3 text-right font-mono font-bold text-emerald-600">
-                              +৳{tx.amount.toLocaleString()}
-                            </td>
-                            <td className="py-2.5 px-3 text-right font-mono font-black text-slate-900">
-                              ৳{tx.remainingDue.toLocaleString()}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  <div className="divide-y divide-slate-100 border border-slate-200 rounded-2xl overflow-hidden">
+                    {selectedSupplier.paymentHistory.map((pay) => (
+                      <div key={pay.id} className="p-4 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/50">
+                        <div className="flex items-start gap-3">
+                          <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl mt-0.5">
+                            <ArrowDownRight className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono font-black text-sm text-slate-900">৳{pay.amount.toLocaleString()}</span>
+                              <span className="badge badge-success text-white text-[10px] font-bold">{pay.paymentMethod}</span>
+                              <span className="badge badge-outline text-[10px] font-mono">{pay.referenceNo}</span>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-0.5">{pay.note}</p>
+                            <span className="text-[10px] text-slate-400 font-mono block mt-1">{pay.date}</span>
+                          </div>
+                        </div>
+
+                        <div className="text-right">
+                          <span className="text-[10px] text-slate-400 block font-semibold">Remaining Due:</span>
+                          <span className="font-mono font-extrabold text-sm text-slate-900">৳{pay.remainingDue.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
             )}
 
             {/* Modal Footer */}
-            <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-              <button 
-                onClick={() => setSelectedSupplier(null)}
-                className="btn btn-sm btn-ghost font-bold text-slate-600"
-              >
-                Close Window
-              </button>
-
-              {selectedSupplier.due > 0 && (
-                <button 
-                  onClick={() => {
-                    setPayAmount(selectedSupplier.due);
-                    setIsPayModalOpen(true);
-                  }}
-                  className="btn btn-sm btn-warning gap-1 text-slate-900 font-bold rounded-xl"
+            <div className="flex items-center justify-between border-t border-slate-100 pt-4">
+              <span className="text-xs text-slate-400 font-mono">Supplier ID: {selectedSupplier.id}</span>
+              <div className="flex items-center gap-2">
+                {selectedSupplier.due > 0 && (
+                  <button
+                    onClick={() => {
+                      setPayAmount(selectedSupplier.due);
+                      setIsPayModalOpen(true);
+                    }}
+                    className="btn btn-sm btn-warning text-slate-900 font-bold gap-1.5 rounded-xl"
+                  >
+                    <Wallet className="w-4 h-4" /> Pay Outstanding Due
+                  </button>
+                )}
+                <button
+                  onClick={() => setSelectedSupplier(null)}
+                  className="btn btn-sm btn-ghost font-bold rounded-xl"
                 >
-                  <Wallet className="w-4 h-4" /> Pay Outstanding Due (৳{selectedSupplier.due.toLocaleString()})
+                  Close
                 </button>
-              )}
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* MAKE PAYMENT TO SUPPLIER MODAL */}
+      {/* MAKE PAYMENT MODAL */}
       {isPayModalOpen && selectedSupplier && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl border border-slate-200">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
-                <h3 className="font-black text-xl text-slate-900">Record Vendor Payment</h3>
-                <p className="text-xs text-slate-500">{selectedSupplier.companyName}</p>
+                <h3 className="font-extrabold text-lg text-slate-900 flex items-center gap-2">
+                  <CreditCard className="w-5 h-5 text-primary" /> Record Supplier Payment
+                </h3>
+                <p className="text-xs text-slate-500">Pay against outstanding invoice for {selectedSupplier.companyName}</p>
               </div>
-              <button onClick={() => setIsPayModalOpen(false)} className="btn btn-ghost btn-circle btn-xs">
-                <X className="w-5 h-5" />
+              <button 
+                onClick={() => setIsPayModalOpen(false)}
+                className="btn btn-ghost btn-circle btn-xs"
+                disabled={submittingPayment}
+              >
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Live Financial Due Card */}
-            <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-900 space-y-1">
-              <div className="flex justify-between font-bold">
-                <span>Total Purchase: ৳{selectedSupplier.totalPurchase.toLocaleString()}</span>
-                <span>Paid So Far: ৳{selectedSupplier.paid.toLocaleString()}</span>
-              </div>
-              <div className="border-t border-amber-200 pt-1 flex justify-between items-center">
-                <span className="font-black text-slate-800">Current Outstanding Due:</span>
-                <span className="text-xl font-mono font-black text-amber-700">৳{selectedSupplier.due.toLocaleString()}</span>
-              </div>
+            <div className="p-3 bg-amber-50 rounded-2xl border border-amber-200 flex items-center justify-between text-xs">
+              <span className="font-bold text-amber-800">Current Outstanding Due:</span>
+              <strong className="font-mono text-base text-amber-600 font-black">৳{selectedSupplier.due.toLocaleString()}</strong>
             </div>
 
-            <div className="space-y-3 text-xs">
+            <div className="space-y-4 text-xs">
               <div className="space-y-1">
                 <label className="font-bold text-slate-700">Payment Amount (৳) *</label>
                 <input 
                   type="number"
+                  min={1}
                   max={selectedSupplier.due}
                   value={payAmount}
                   onChange={(e) => setPayAmount(Number(e.target.value))}
-                  className="input input-bordered w-full font-mono font-bold text-slate-900 text-base focus:outline-none rounded-xl"
+                  className="input input-sm input-bordered w-full font-mono font-black text-lg focus:outline-none rounded-xl"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-700">Payment Method *</label>
-                <select 
+                <label className="font-bold text-slate-700">Payment Channel / Method *</label>
+                <select
                   value={payMethod}
                   onChange={(e) => setPayMethod(e.target.value as any)}
-                  className="select select-bordered w-full font-bold focus:outline-none rounded-xl"
+                  className="select select-sm select-bordered w-full rounded-xl focus:outline-none"
                 >
-                  <option value="Bank Transfer">Bank Transfer</option>
-                  <option value="bKash Merchant">bKash Merchant</option>
-                  <option value="Nagad">Nagad MFS</option>
-                  <option value="Cheque">Cheque</option>
-                  <option value="Cash">Cash</option>
+                  <option value="Bank Transfer">Bank Transfer (EFT / RTGS)</option>
+                  <option value="bKash Merchant">bKash Merchant Gateway</option>
+                  <option value="Nagad">Nagad Direct Payment</option>
+                  <option value="Cheque">Bank Account Cheque</option>
+                  <option value="Cash">Cash Voucher</option>
                 </select>
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-700">Transaction Ref / Cheque No.</label>
+                <label className="font-bold text-slate-700">Reference / Transaction ID *</label>
                 <input 
                   type="text"
-                  placeholder="e.g. TRX-992018 or CHQ-00129"
+                  placeholder="e.g. TRX-908123 or CHQ-4401"
                   value={payRef}
                   onChange={(e) => setPayRef(e.target.value)}
                   className="input input-sm input-bordered w-full font-mono focus:outline-none rounded-xl"
@@ -728,71 +772,97 @@ export default function AdminSuppliersPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-700">Note / Memo</label>
-                <input 
-                  type="text"
-                  placeholder="e.g. Partial settlement for PO-1023"
+                <label className="font-bold text-slate-700">Payment Remarks / Note</label>
+                <textarea
+                  rows={2}
+                  placeholder="e.g. Partial settlement for October electronics shipment..."
                   value={payNote}
                   onChange={(e) => setPayNote(e.target.value)}
-                  className="input input-sm input-bordered w-full focus:outline-none rounded-xl"
-                />
+                  className="textarea textarea-bordered w-full focus:outline-none rounded-xl"
+                ></textarea>
               </div>
-            </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
-              <button 
-                onClick={() => setIsPayModalOpen(false)} 
-                className="btn btn-sm btn-ghost font-bold text-slate-500"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={handleMakePayment} 
-                className="btn btn-sm btn-success text-white font-bold rounded-xl gap-1"
-              >
-                <CheckCircle2 className="w-4 h-4" /> Confirm & Record Payment
-              </button>
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsPayModalOpen(false)}
+                  className="btn btn-sm btn-ghost font-bold text-slate-500"
+                  disabled={submittingPayment}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleMakePayment}
+                  disabled={submittingPayment || payAmount <= 0}
+                  className="btn btn-sm btn-primary font-bold gap-1 rounded-xl"
+                >
+                  {submittingPayment ? (
+                    <span className="loading loading-spinner loading-xs"></span>
+                  ) : (
+                    <Save className="w-4 h-4" />
+                  )}
+                  Save & Confirm Payment
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* ADD NEW SUPPLIER MODAL */}
+      {/* ADD / EDIT SUPPLIER MODAL */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-xl w-full p-6 space-y-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
-                <h3 className="font-black text-2xl text-slate-900">Add New Supplier</h3>
-                <p className="text-xs text-slate-500">Register vendor details and opening balances</p>
+                <h3 className="font-extrabold text-lg text-slate-900 flex items-center gap-2">
+                  <Building2 className="w-5 h-5 text-primary" /> {editingSupplier ? "Edit Supplier Details" : "Register New Supplier Partner"}
+                </h3>
+                <p className="text-xs text-slate-500">Persist vendor profile and procurement balance in MongoDB</p>
               </div>
-              <button onClick={() => setIsAddModalOpen(false)} className="btn btn-ghost btn-circle btn-xs">
-                <X className="w-5 h-5" />
+              <button 
+                onClick={() => setIsAddModalOpen(false)}
+                className="btn btn-ghost btn-circle btn-xs"
+                disabled={isSubmittingSupplier}
+              >
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleAddSupplier} className="space-y-4 text-xs">
+            <form onSubmit={handleSaveSupplier} className="space-y-4 text-xs">
+              <div className="space-y-1">
+                <label className="font-bold text-slate-700">Company Name *</label>
+                <input 
+                  type="text"
+                  required
+                  placeholder="e.g. Apex Tech Hardware Ltd"
+                  value={newSupplier.companyName}
+                  onChange={(e) => setNewSupplier({ ...newSupplier, companyName: e.target.value })}
+                  className="input input-sm input-bordered w-full focus:outline-none rounded-xl"
+                />
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="font-bold text-slate-700">Company Name *</label>
-                  <input
+                  <label className="font-bold text-slate-700">Contact Person *</label>
+                  <input 
                     type="text"
                     required
-                    placeholder="e.g. ABC Electronics Ltd"
-                    value={newSupplier.companyName}
-                    onChange={(e) => setNewSupplier({ ...newSupplier, companyName: e.target.value })}
+                    placeholder="e.g. Tanvir Ahmed"
+                    value={newSupplier.contactPerson}
+                    onChange={(e) => setNewSupplier({ ...newSupplier, contactPerson: e.target.value })}
                     className="input input-sm input-bordered w-full focus:outline-none rounded-xl"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-bold text-slate-700">Contact Person *</label>
-                  <input
+                  <label className="font-bold text-slate-700">Designation</label>
+                  <input 
                     type="text"
-                    required
-                    placeholder="e.g. Michael Scott"
-                    value={newSupplier.contactPerson}
-                    onChange={(e) => setNewSupplier({ ...newSupplier, contactPerson: e.target.value })}
+                    placeholder="e.g. Sales Manager"
+                    value={newSupplier.designation}
+                    onChange={(e) => setNewSupplier({ ...newSupplier, designation: e.target.value })}
                     className="input input-sm input-bordered w-full focus:outline-none rounded-xl"
                   />
                 </div>
@@ -801,19 +871,19 @@ export default function AdminSuppliersPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="font-bold text-slate-700">Phone Number *</label>
-                  <input
+                  <input 
                     type="text"
                     required
-                    placeholder="+880 1711-XXXXXX"
+                    placeholder="+880 17XXXXXXXX"
                     value={newSupplier.phone}
                     onChange={(e) => setNewSupplier({ ...newSupplier, phone: e.target.value })}
-                    className="input input-sm input-bordered w-full focus:outline-none rounded-xl"
+                    className="input input-sm input-bordered w-full font-mono focus:outline-none rounded-xl"
                   />
                 </div>
 
                 <div className="space-y-1">
                   <label className="font-bold text-slate-700">Email Address</label>
-                  <input
+                  <input 
                     type="email"
                     placeholder="sales@company.com"
                     value={newSupplier.email}
@@ -824,10 +894,10 @@ export default function AdminSuppliersPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-700">Office / Warehouse Address</label>
-                <input
+                <label className="font-bold text-slate-700">Office / Factory Address</label>
+                <input 
                   type="text"
-                  placeholder="e.g. Level 5, Motijheel C/A, Dhaka"
+                  placeholder="e.g. Level 4, Plot 9, Motijheel C/A, Dhaka"
                   value={newSupplier.address}
                   onChange={(e) => setNewSupplier({ ...newSupplier, address: e.target.value })}
                   className="input input-sm input-bordered w-full focus:outline-none rounded-xl"
@@ -835,8 +905,8 @@ export default function AdminSuppliersPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-700">Supplied Products (comma-separated)</label>
-                <input
+                <label className="font-bold text-slate-700">Supplied Products (Comma Separated)</label>
+                <input 
                   type="text"
                   placeholder="Mice, Keyboards, Fast Cables"
                   value={newSupplier.productsInput}
@@ -848,7 +918,7 @@ export default function AdminSuppliersPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3 bg-slate-50 rounded-2xl border border-slate-200">
                 <div className="space-y-1">
                   <label className="font-bold text-slate-700">Total Purchase (৳)</label>
-                  <input
+                  <input 
                     type="number"
                     min={0}
                     placeholder="100000"
@@ -860,7 +930,7 @@ export default function AdminSuppliersPage() {
 
                 <div className="space-y-1">
                   <label className="font-bold text-slate-700">Paid Amount (৳)</label>
-                  <input
+                  <input 
                     type="number"
                     min={0}
                     placeholder="60000"
@@ -876,14 +946,21 @@ export default function AdminSuppliersPage() {
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
                   className="btn btn-sm btn-ghost font-bold text-slate-500"
+                  disabled={isSubmittingSupplier}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
+                  disabled={isSubmittingSupplier}
                   className="btn btn-sm btn-primary font-bold rounded-xl"
                 >
-                  Save Supplier
+                  {isSubmittingSupplier ? (
+                    <span className="loading loading-spinner loading-xs"></span>
+                  ) : (
+                    <Save className="w-4 h-4" />
+                  )}
+                  {editingSupplier ? "Save Changes" : "Save Supplier"}
                 </button>
               </div>
             </form>

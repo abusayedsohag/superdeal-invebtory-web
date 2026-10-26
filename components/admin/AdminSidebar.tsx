@@ -33,6 +33,7 @@ function SidebarLinks() {
     products: number;
     categories: number;
     warehouses: number;
+    suppliers: number;
     lowStock: number;
     outOfStock: number;
     inventoryAlerts: number;
@@ -40,6 +41,7 @@ function SidebarLinks() {
     products: 0,
     categories: 0,
     warehouses: 0,
+    suppliers: 0,
     lowStock: 0,
     outOfStock: 0,
     inventoryAlerts: 0,
@@ -93,7 +95,13 @@ function SidebarLinks() {
       badgeColor: "badge-ghost font-bold text-slate-300"
     },
     { label: "Purchases", href: "/admin/purchases", icon: ShoppingBag },
-    { label: "Suppliers", href: "/admin/suppliers", icon: Truck },
+    { 
+      label: "Suppliers", 
+      href: "/admin/suppliers", 
+      icon: Truck,
+      badge: counts.suppliers > 0 ? String(counts.suppliers) : "0",
+      badgeColor: "badge-neutral font-bold text-slate-300"
+    },
     { label: "Orders", href: "/admin/orders", icon: ShoppingCart, badge: "12 New", badgeColor: "badge-primary" },
     { label: "Returns & Refunds", href: "/admin/returns", icon: RotateCcw, badge: "1 Pending", badgeColor: "badge-warning" },
     { label: "Delivery & Courier", href: "/admin/delivery", icon: Truck },
