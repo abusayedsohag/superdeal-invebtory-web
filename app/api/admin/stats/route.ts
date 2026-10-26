@@ -8,13 +8,15 @@ export async function GET() {
     const categoriesCollection = db.collection("categories");
     const warehousesCollection = db.collection("warehouses");
     const suppliersCollection = db.collection("suppliers");
+    const expensesCollection = db.collection("expenses");
 
     // Run parallel counts
-    const [totalProducts, totalCategories, totalWarehouses, totalSuppliers, lowStockCount, outOfStockCount] = await Promise.all([
+    const [totalProducts, totalCategories, totalWarehouses, totalSuppliers, totalExpenses, lowStockCount, outOfStockCount] = await Promise.all([
       productsCollection.countDocuments({}),
       categoriesCollection.countDocuments({ status: { $ne: "Inactive" } }),
       warehousesCollection.countDocuments({ status: { $ne: "Inactive" } }),
       suppliersCollection.countDocuments({ status: { $ne: "Inactive" } }),
+      expensesCollection.countDocuments({}),
       productsCollection.countDocuments({
         $and: [
           { stock: { $gt: 0 } },
@@ -43,6 +45,7 @@ export async function GET() {
         categories: totalCategories,
         warehouses: totalWarehouses || 3,
         suppliers: totalSuppliers || 3,
+        expenses: totalExpenses,
         lowStock: lowStockCount,
         outOfStock: outOfStockCount,
         inventoryAlerts,

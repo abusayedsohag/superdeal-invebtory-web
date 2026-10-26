@@ -34,6 +34,7 @@ function SidebarLinks() {
     categories: number;
     warehouses: number;
     suppliers: number;
+    expenses: number;
     lowStock: number;
     outOfStock: number;
     inventoryAlerts: number;
@@ -42,6 +43,7 @@ function SidebarLinks() {
     categories: 0,
     warehouses: 0,
     suppliers: 0,
+    expenses: 0,
     lowStock: 0,
     outOfStock: 0,
     inventoryAlerts: 0,
@@ -106,7 +108,13 @@ function SidebarLinks() {
     { label: "Returns & Refunds", href: "/admin/returns", icon: RotateCcw, badge: "1 Pending", badgeColor: "badge-warning" },
     { label: "Delivery & Courier", href: "/admin/delivery", icon: Truck },
     { label: "Customers", href: "/admin/customers", icon: Users },
-    { label: "Expenses", href: "/admin/expenses", icon: Receipt },
+    { 
+      label: "Expenses", 
+      href: "/admin/expenses", 
+      icon: Receipt,
+      badge: counts.expenses > 0 ? String(counts.expenses) : "0",
+      badgeColor: "badge-ghost font-bold text-slate-300"
+    },
     { label: "Coupons", href: "/admin/coupons", icon: Ticket },
     { label: "Marketing", href: "/admin/marketing", icon: Megaphone },
     { label: "Reviews", href: "/admin/reviews", icon: Star, badge: "1 Pending", badgeColor: "badge-warning" },
