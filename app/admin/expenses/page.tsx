@@ -53,6 +53,14 @@ export interface Expense {
   createdAt?: string;
 }
 
+function getTodayDateString() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export default function AdminExpensesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,7 +84,7 @@ export default function AdminExpensesPage() {
   }>({
     amount: 0,
     category: "Rent",
-    date: new Date().toISOString().split("T")[0],
+    date: "",
     description: "",
     attachmentName: "",
     paymentMethod: "Bank Transfer"
@@ -113,6 +121,10 @@ export default function AdminExpensesPage() {
   };
 
   useEffect(() => {
+    setNewExpense(prev => ({
+      ...prev,
+      date: prev.date || getTodayDateString(),
+    }));
     loadExpenses();
   }, []);
 
@@ -135,7 +147,7 @@ export default function AdminExpensesPage() {
     setNewExpense({
       amount: 0,
       category: "Rent",
-      date: new Date().toISOString().split("T")[0],
+      date: getTodayDateString(),
       description: "",
       attachmentName: "",
       paymentMethod: "Bank Transfer"
@@ -149,7 +161,7 @@ export default function AdminExpensesPage() {
     setNewExpense({
       amount: exp.amount,
       category: exp.category,
-      date: new Date().toISOString().split("T")[0],
+      date: getTodayDateString(),
       description: exp.description,
       attachmentName: exp.attachment,
       paymentMethod: exp.paymentMethod
