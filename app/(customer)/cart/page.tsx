@@ -58,8 +58,14 @@ export default function CartPage() {
 
   // Coupon State
   const [couponInput, setCouponInput] = useState("");
-  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number; type: "fixed" | "percent" } | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    discount: number;
+    type: "fixed" | "percent";
+    calculatedDiscount: number;
+  } | null>(null);
   const [couponError, setCouponError] = useState("");
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const [stockWarning, setStockWarning] = useState<string | null>(null);
 
   // Update Quantity with Stock Validation
@@ -106,7 +112,7 @@ export default function CartPage() {
   let discountAmount = 0;
   if (appliedCoupon) {
     if (appliedCoupon.type === "fixed") {
-      discountAmount = appliedCoupon.discount;
+      discountAmount = Math.min(subtotal, appliedCoupon.discount);
     } else {
       discountAmount = (subtotal * appliedCoupon.discount) / 100;
     }
@@ -115,37 +121,54 @@ export default function CartPage() {
   // Total Final Amount
   const total = Math.max(0, subtotal + shippingCost + estimatedTax - discountAmount);
 
-  // Apply Coupon Handler
-  const handleApplyCoupon = (e: React.FormEvent) => {
+  // Apply Coupon Handler - Dynamic with MongoDB API
+  const handleApplyCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
     setCouponError("");
 
     const code = couponInput.trim().toUpperCase();
+    if (!code) {
+      setCouponError("Please enter a coupon code");
+      return;
+    }
 
-    if (code === "SUPER20") {
-      if (subtotal < 50) {
-        setCouponError("SUPER20 requires a minimum subtotal of ৳50.00!");
-        return;
+    setIsApplyingCoupon(true);
+    try {
+      const res = await fetch(`/api/coupons?validate=true&code=${encodeURIComponent(code)}&subtotal=${subtotal}`, {
+        cache: "no-store"
+      });
+      const data = await res.json();
+
+      if (data.valid && data.coupon) {
+        const c = data.coupon;
+        const calcDisc = c.type === "fixed" ? c.discount : (subtotal * c.discount) / 100;
+        const couponObj = {
+          code: c.code,
+          discount: c.discount,
+          type: c.type,
+          calculatedDiscount: calcDisc
+        };
+        setAppliedCoupon(couponObj);
+        setCouponInput("");
+        if (typeof window !== "undefined") {
+          localStorage.setItem("appliedCoupon", JSON.stringify(couponObj));
+        }
+      } else {
+        setCouponError(data.message || "Invalid coupon code");
       }
-      setAppliedCoupon({ code: "SUPER20", discount: 20, type: "fixed" });
-      setCouponInput("");
-    } else if (code === "MEGA50") {
-      if (subtotal < 100) {
-        setCouponError("MEGA50 requires a minimum subtotal of ৳100.00!");
-        return;
-      }
-      setAppliedCoupon({ code: "MEGA50", discount: 50, type: "percent" });
-      setCouponInput("");
-    } else if (code === "WELCOME10") {
-      setAppliedCoupon({ code: "WELCOME10", discount: 10, type: "fixed" });
-      setCouponInput("");
-    } else {
-      setCouponError("Invalid promo code! Try SUPER20, MEGA50 or WELCOME10.");
+    } catch (err) {
+      console.error("Coupon validation error:", err);
+      setCouponError("Could not validate coupon. Please try again.");
+    } finally {
+      setIsApplyingCoupon(false);
     }
   };
 
   const removeCoupon = () => {
     setAppliedCoupon(null);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("appliedCoupon");
+    }
   };
 
   // Free shipping progress calculation
@@ -316,10 +339,14 @@ export default function CartPage() {
                     placeholder="Enter coupon code..."
                     value={couponInput}
                     onChange={(e) => setCouponInput(e.target.value)}
-                    className="input input-sm input-bordered join-item uppercase text-xs w-full focus:outline-none"
+                    className="input input-sm input-bordered join-item uppercase text-xs w-full focus:outline-none font-mono"
                   />
-                  <button type="submit" className="btn btn-sm btn-primary join-item px-6 font-bold">
-                    Apply Coupon
+                  <button
+                    type="submit"
+                    disabled={isApplyingCoupon}
+                    className="btn btn-sm btn-primary join-item px-6 font-bold"
+                  >
+                    {isApplyingCoupon ? "Checking..." : "Apply Coupon"}
                   </button>
                 </form>
               ) : (
@@ -347,25 +374,25 @@ export default function CartPage() {
             <div className="space-y-3 text-sm">
               <div className="flex justify-between text-base-content/70">
                 <span>Items Subtotal ({items.reduce((s, i) => s + i.quantity, 0)} units)</span>
-                <span className="font-bold text-base-content font-mono">\${subtotal.toFixed(2)}</span>
+                <span className="font-bold text-base-content font-mono">৳{subtotal.toFixed(2)}</span>
               </div>
 
               <div className="flex justify-between text-base-content/70">
                 <span>Shipping ({shippingMethod})</span>
                 <span className="font-bold text-base-content font-mono">
-                  {shippingCost === 0 ? <span className="text-success font-bold">FREE</span> : `\$${shippingCost.toFixed(2)}`}
+                  {shippingCost === 0 ? <span className="text-success font-bold">FREE</span> : `৳${shippingCost.toFixed(2)}`}
                 </span>
               </div>
 
               <div className="flex justify-between text-base-content/70">
                 <span>Estimated Tax (5% VAT)</span>
-                <span className="font-bold text-base-content font-mono">\${estimatedTax.toFixed(2)}</span>
+                <span className="font-bold text-base-content font-mono">৳{estimatedTax.toFixed(2)}</span>
               </div>
 
               {appliedCoupon && (
                 <div className="flex justify-between text-success font-bold">
                   <span>Coupon Discount ({appliedCoupon.code})</span>
-                  <span className="font-mono">-\${discountAmount.toFixed(2)}</span>
+                  <span className="font-mono">-৳{discountAmount.toFixed(2)}</span>
                 </div>
               )}
 
@@ -373,7 +400,7 @@ export default function CartPage() {
 
               <div className="flex justify-between text-xl font-black text-base-content">
                 <span>Total Amount</span>
-                <span className="text-primary text-2xl font-mono">\${total.toFixed(2)}</span>
+                <span className="text-primary text-2xl font-mono">৳{total.toFixed(2)}</span>
               </div>
             </div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import PaymentGatewayModal from "@/components/customer/PaymentGatewayModal";
 import { 
   CheckCircle2, 
@@ -15,7 +15,8 @@ import {
   Lock,
   Smartphone,
   Building,
-  ArrowRight
+  ArrowRight,
+  Tag
 } from "lucide-react";
 
 export default function CheckoutPage() {
@@ -32,8 +33,43 @@ export default function CheckoutPage() {
   const [isGatewayModalOpen, setIsGatewayModalOpen] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
 
-  // Order Total
-  const totalAmount = 502.89;
+  // Dynamic Coupon State from Cart / localStorage
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    discount: number;
+    type: "fixed" | "percent";
+    calculatedDiscount?: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("appliedCoupon");
+      if (saved) {
+        try {
+          setAppliedCoupon(JSON.parse(saved));
+        } catch (e) {
+          console.error("Failed to parse appliedCoupon:", e);
+        }
+      }
+    }
+  }, []);
+
+  // Order Financials
+  const subtotal = 497.99;
+  const shippingCost = 0; // Free for Dhaka / orders > 100
+  const estimatedTax = subtotal * 0.05;
+
+  let couponDiscountAmount = 0;
+  if (appliedCoupon) {
+    if (appliedCoupon.type === "fixed") {
+      couponDiscountAmount = Math.min(subtotal, appliedCoupon.discount);
+    } else {
+      couponDiscountAmount = (subtotal * appliedCoupon.discount) / 100;
+    }
+  }
+
+  // Final Order Total
+  const totalAmount = Math.max(0, subtotal + shippingCost + estimatedTax - couponDiscountAmount);
 
   // Districts & Upazila Options
   const districtOptions: Record<string, string[]> = {
@@ -367,19 +403,21 @@ export default function CheckoutPage() {
 
               <div className="flex justify-between text-xs text-base-content/70">
                 <span>Estimated Tax (5% VAT)</span>
-                <span className="font-mono font-bold text-base-content">৳{(24.90).toFixed(2)}</span>
+                <span className="font-mono font-bold text-base-content">৳{estimatedTax.toFixed(2)}</span>
               </div>
 
-              <div className="flex justify-between text-xs text-success font-bold">
-                <span>Coupon (SUPER20)</span>
-                <span className="font-mono">-৳20.00</span>
-              </div>
+              {appliedCoupon ? (
+                <div className="flex justify-between text-xs text-success font-bold">
+                  <span>Coupon ({appliedCoupon.code})</span>
+                  <span className="font-mono">-৳{couponDiscountAmount.toFixed(2)}</span>
+                </div>
+              ) : null}
 
               <div className="divider my-1"></div>
 
               <div className="flex justify-between text-xl font-black text-base-content">
                 <span>Total Pay</span>
-                <span className="text-primary font-mono text-2xl">৳{(502.89).toFixed(2)}</span>
+                <span className="text-primary font-mono text-2xl">৳{totalAmount.toFixed(2)}</span>
               </div>
             </div>
 

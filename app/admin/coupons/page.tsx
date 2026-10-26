@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Ticket,
   Plus,
@@ -11,10 +11,17 @@ import {
   X,
   Sparkles,
   Layers,
-  UserCheck
+  UserCheck,
+  RefreshCw,
+  Trash2,
+  CheckCircle2,
+  AlertCircle,
+  TrendingUp,
+  Percent
 } from "lucide-react";
 
 interface Coupon {
+  _id?: string;
   id: string;
   code: string;
   type: "Fixed Amount" | "Percentage";
@@ -30,94 +37,29 @@ interface Coupon {
   productScope: string;
   customerAudience: string;
   usagePerUser: number;
+  createdAt?: string;
 }
 
 export default function AdminCouponsPage() {
-  const [coupons, setCoupons] = useState<Coupon[]>([
-    {
-      id: "CPN-001",
-      code: "SAVE500",
-      type: "Fixed Amount",
-      discountValue: 500,
-      minOrder: 3000,
-      maxDiscount: 500,
-      usageLimit: 500,
-      usedCount: 184,
-      expiry: "30 Oct 2026",
-      status: "Active",
-      isFirstOrderOnly: false,
-      categoryScope: "All Categories",
-      productScope: "All Products",
-      customerAudience: "All Customers",
-      usagePerUser: 1
-    },
-    {
-      id: "CPN-002",
-      code: "SUPER20",
-      type: "Percentage",
-      discountValue: 20,
-      minOrder: 1500,
-      maxDiscount: 1000,
-      usageLimit: 1000,
-      usedCount: 412,
-      expiry: "31 Dec 2026",
-      status: "Active",
-      isFirstOrderOnly: false,
-      categoryScope: "Electronics",
-      productScope: "All Products",
-      customerAudience: "All Customers",
-      usagePerUser: 2
-    },
-    {
-      id: "CPN-003",
-      code: "WELCOME100",
-      type: "Fixed Amount",
-      discountValue: 100,
-      minOrder: 500,
-      maxDiscount: 100,
-      usageLimit: 2000,
-      usedCount: 1240,
-      expiry: "15 Nov 2026",
-      status: "Active",
-      isFirstOrderOnly: true,
-      categoryScope: "All Categories",
-      productScope: "All Products",
-      customerAudience: "First-Time Buyers",
-      usagePerUser: 1
-    },
-    {
-      id: "CPN-004",
-      code: "VIPGOLD50",
-      type: "Percentage",
-      discountValue: 50,
-      minOrder: 5000,
-      maxDiscount: 2500,
-      usageLimit: 100,
-      usedCount: 35,
-      expiry: "25 Oct 2026",
-      status: "Active",
-      isFirstOrderOnly: false,
-      categoryScope: "Fashion",
-      productScope: "All Products",
-      customerAudience: "VIP Gold Members",
-      usagePerUser: 3
-    }
-  ]);
-
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // New Coupon Form State
+  // New Coupon Form State with SSR-safe initial date
   const [newCoupon, setNewCoupon] = useState({
-    code: "SAVE500",
+    code: "",
     type: "Fixed Amount" as "Fixed Amount" | "Percentage",
-    discountValue: 500,
-    minOrder: 3000,
-    maxDiscount: 1000,
+    discountValue: 100,
+    minOrder: 500,
+    maxDiscount: 500,
     usageLimit: 500,
-    expiry: "2026-10-30",
+    expiry: "",
     isFirstOrderOnly: false,
     categoryScope: "All Categories",
     productScope: "All Products",
@@ -125,56 +67,184 @@ export default function AdminCouponsPage() {
     usagePerUser: 1
   });
 
+  // Fetch Coupons from API
+  const fetchCoupons = async (showLoading = true) => {
+    if (showLoading) setIsLoading(true);
+    else setIsRefreshing(true);
+
+    try {
+      const res = await fetch("/api/coupons", { cache: "no-store" });
+      const data = await res.json();
+      if (data.success && Array.isArray(data.coupons)) {
+        setCoupons(data.coupons);
+      }
+    } catch (err) {
+      console.error("Failed to load coupons:", err);
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCoupons();
+    // SSR-safe default expiry (30 days from now)
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 30);
+    setNewCoupon((prev) => ({
+      ...prev,
+      expiry: futureDate.toISOString().split("T")[0]
+    }));
+  }, []);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
   const handleCopyCode = (code: string) => {
-    navigator.clipboard.writeText(code);
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(code);
+    }
     setCopiedCode(code);
     setTimeout(() => setCopiedCode(null), 3000);
   };
 
-  const handleCreateCoupon = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newCoupon.code) return;
+  // Toggle Coupon Status (Active <-> Expired)
+  const handleToggleStatus = async (coupon: Coupon) => {
+    const newStatus = coupon.status === "Active" ? "Expired" : "Active";
+    // Optimistic update
+    setCoupons((prev) =>
+      prev.map((c) => (c.id === coupon.id ? { ...c, status: newStatus } : c))
+    );
 
-    const formattedExpiry = new Date(newCoupon.expiry).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric"
-    });
-
-    const created: Coupon = {
-      id: `CPN-00${coupons.length + 1}`,
-      code: newCoupon.code.toUpperCase().trim(),
-      type: newCoupon.type,
-      discountValue: Number(newCoupon.discountValue) || 0,
-      minOrder: Number(newCoupon.minOrder) || 0,
-      maxDiscount: Number(newCoupon.maxDiscount) || undefined,
-      usageLimit: Number(newCoupon.usageLimit) || 100,
-      usedCount: 0,
-      expiry: formattedExpiry,
-      status: "Active",
-      isFirstOrderOnly: newCoupon.isFirstOrderOnly,
-      categoryScope: newCoupon.categoryScope,
-      productScope: newCoupon.productScope,
-      customerAudience: newCoupon.customerAudience,
-      usagePerUser: Number(newCoupon.usagePerUser) || 1
-    };
-
-    setCoupons(prev => [created, ...prev]);
-    setIsCreateModalOpen(false);
+    try {
+      const res = await fetch("/api/coupons", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: coupon.id,
+          _id: coupon._id,
+          status: newStatus
+        })
+      });
+      const data = await res.json();
+      if (!data.success) {
+        showToast("Failed to update status");
+        fetchCoupons(false);
+      } else {
+        showToast(`Coupon status set to ${newStatus}`);
+      }
+    } catch (err) {
+      console.error("Status toggle error:", err);
+      fetchCoupons(false);
+    }
   };
 
-  const filteredCoupons = coupons.filter(c => {
-    const matchesQuery = c.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  // Delete Coupon
+  const handleDeleteCoupon = async (coupon: Coupon) => {
+    if (!confirm(`Are you sure you want to delete coupon ${coupon.code}?`)) return;
+
+    // Optimistic remove
+    setCoupons((prev) => prev.filter((c) => c.id !== coupon.id));
+
+    try {
+      const param = coupon._id ? `_id=${coupon._id}` : `id=${coupon.id}`;
+      const res = await fetch(`/api/coupons?${param}`, { method: "DELETE" });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Coupon ${coupon.code} deleted successfully`);
+      } else {
+        showToast(data.message || "Failed to delete coupon");
+        fetchCoupons(false);
+      }
+    } catch (err) {
+      console.error("Delete coupon error:", err);
+      fetchCoupons(false);
+    }
+  };
+
+  // Create Coupon
+  const handleCreateCoupon = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCoupon.code.trim()) return;
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/coupons", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: newCoupon.code.trim().toUpperCase(),
+          type: newCoupon.type,
+          discountValue: Number(newCoupon.discountValue) || 0,
+          minOrder: Number(newCoupon.minOrder) || 0,
+          maxDiscount: Number(newCoupon.maxDiscount) || undefined,
+          usageLimit: Number(newCoupon.usageLimit) || 100,
+          expiry: newCoupon.expiry,
+          status: "Active",
+          isFirstOrderOnly: newCoupon.isFirstOrderOnly,
+          categoryScope: newCoupon.categoryScope,
+          productScope: newCoupon.productScope,
+          customerAudience: newCoupon.customerAudience,
+          usagePerUser: Number(newCoupon.usagePerUser) || 1
+        })
+      });
+
+      const data = await res.json();
+      if (data.success && data.coupon) {
+        setCoupons((prev) => [data.coupon, ...prev]);
+        setIsCreateModalOpen(false);
+        showToast(`Coupon ${data.coupon.code} created successfully!`);
+        // Reset form code
+        setNewCoupon((prev) => ({
+          ...prev,
+          code: "",
+          discountValue: 100,
+          minOrder: 500
+        }));
+      } else {
+        alert(data.message || "Failed to create coupon");
+      }
+    } catch (err) {
+      console.error("Create coupon error:", err);
+      alert("Network error creating coupon");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Filter coupons
+  const filteredCoupons = coupons.filter((c) => {
+    const matchesQuery =
+      c.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.categoryScope.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.customerAudience.toLowerCase().includes(searchQuery.toLowerCase());
 
     if (filterType === "percentage") return matchesQuery && c.type === "Percentage";
     if (filterType === "fixed") return matchesQuery && c.type === "Fixed Amount";
+    if (filterType === "active") return matchesQuery && c.status === "Active";
+    if (filterType === "expired") return matchesQuery && c.status === "Expired";
     return matchesQuery;
   });
 
+  // Calculate live stats
+  const activeCouponsCount = coupons.filter((c) => c.status === "Active").length;
+  const totalRedemptions = coupons.reduce((sum, c) => sum + (c.usedCount || 0), 0);
+  const percentageCouponsCount = coupons.filter((c) => c.type === "Percentage").length;
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-16">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="toast toast-top toast-end z-50">
+          <div className="alert alert-success shadow-lg text-white font-bold text-xs py-2 px-4 rounded-xl flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4" />
+            <span>{toastMessage}</span>
+          </div>
+        </div>
+      )}
+
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
@@ -182,15 +252,61 @@ export default function AdminCouponsPage() {
             <Ticket className="w-8 h-8 text-primary" /> Coupon System & Discounts
           </h1>
           <p className="text-xs text-slate-500">
-            Create promotional discount codes, manage usage limits, and enforce advanced customer targeting rules
+            Create promotional discount codes, manage usage limits, and enforce advanced customer targeting rules with real-time MongoDB sync
           </p>
         </div>
-        <button
-          onClick={() => setIsCreateModalOpen(true)}
-          className="btn btn-primary btn-sm gap-2 font-bold shadow-md rounded-xl"
-        >
-          <Plus className="w-4 h-4" /> Create New Coupon
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => fetchCoupons(false)}
+            disabled={isRefreshing}
+            className="btn btn-outline btn-sm gap-2 font-bold rounded-xl"
+            title="Refresh coupons"
+          >
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
+            Refresh
+          </button>
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="btn btn-primary btn-sm gap-2 font-bold shadow-md rounded-xl"
+          >
+            <Plus className="w-4 h-4" /> Create New Coupon
+          </button>
+        </div>
+      </div>
+
+      {/* STATS OVERVIEW CARDS */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-1">
+          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+            <Ticket className="w-3.5 h-3.5 text-primary" /> Total Coupons
+          </span>
+          <p className="text-2xl font-black text-slate-900">{coupons.length}</p>
+          <span className="text-[11px] text-slate-500">{activeCouponsCount} Active In Store</span>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-1">
+          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Active Promo Codes
+          </span>
+          <p className="text-2xl font-black text-emerald-600">{activeCouponsCount}</p>
+          <span className="text-[11px] text-emerald-600/80 font-bold">Ready to apply at checkout</span>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-1">
+          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+            <TrendingUp className="w-3.5 h-3.5 text-indigo-500" /> Total Redemptions
+          </span>
+          <p className="text-2xl font-black text-indigo-600">{totalRedemptions.toLocaleString()}</p>
+          <span className="text-[11px] text-slate-500">Times redeemed by shoppers</span>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-1">
+          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+            <Percent className="w-3.5 h-3.5 text-amber-500" /> Percentage Discounts
+          </span>
+          <p className="text-2xl font-black text-amber-600">{percentageCouponsCount}</p>
+          <span className="text-[11px] text-slate-500">{coupons.length - percentageCouponsCount} Fixed ৳ Coupons</span>
+        </div>
       </div>
 
       {/* SEARCH AND FILTER BAR */}
@@ -216,104 +332,151 @@ export default function AdminCouponsPage() {
             <option value="all">All Discount Types</option>
             <option value="fixed">Fixed Amount (৳)</option>
             <option value="percentage">Percentage (%)</option>
+            <option value="active">Active Status Only</option>
+            <option value="expired">Expired Status Only</option>
           </select>
         </div>
       </div>
 
-      {/* COUPON CARDS GRID */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {filteredCoupons.map((c) => (
-          <div key={c.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4 relative overflow-hidden flex flex-col justify-between">
-            <div>
-              {/* Header */}
-              <div className="flex items-start justify-between border-b border-slate-100 pb-3">
-                <div>
-                  <span className="font-mono font-black text-xl text-primary bg-primary/10 px-2.5 py-1 rounded-xl border border-primary/20 inline-block">
-                    {c.code}
-                  </span>
-                  <p className="text-[11px] font-bold text-slate-500 mt-1">{c.type}</p>
+      {/* LOADING STATE */}
+      {isLoading ? (
+        <div className="py-20 text-center space-y-3">
+          <span className="loading loading-spinner loading-lg text-primary"></span>
+          <p className="text-xs font-bold text-slate-500">Loading coupons from database...</p>
+        </div>
+      ) : filteredCoupons.length === 0 ? (
+        <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 space-y-3">
+          <Ticket className="w-12 h-12 text-slate-300 mx-auto" />
+          <h3 className="font-bold text-slate-800 text-lg">No Coupons Found</h3>
+          <p className="text-xs text-slate-500 max-w-md mx-auto">
+            {searchQuery
+              ? `No coupons matched '${searchQuery}'. Try clearing your filter or search query.`
+              : "No coupons exist in your database yet. Click below to add your first coupon code!"}
+          </p>
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="btn btn-primary btn-sm rounded-xl font-bold gap-2 mt-2"
+          >
+            <Plus className="w-4 h-4" /> Create Coupon
+          </button>
+        </div>
+      ) : (
+        /* COUPON CARDS GRID */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {filteredCoupons.map((c) => (
+            <div
+              key={c.id || c._id}
+              className={`bg-white p-5 rounded-2xl border ${
+                c.status === "Active" ? "border-slate-200 hover:border-primary/40" : "border-slate-200 opacity-75 bg-slate-50/50"
+              } shadow-xs space-y-4 relative overflow-hidden flex flex-col justify-between transition-all`}
+            >
+              <div>
+                {/* Header */}
+                <div className="flex items-start justify-between border-b border-slate-100 pb-3">
+                  <div>
+                    <span className="font-mono font-black text-xl text-primary bg-primary/10 px-2.5 py-1 rounded-xl border border-primary/20 inline-block">
+                      {c.code}
+                    </span>
+                    <p className="text-[11px] font-bold text-slate-500 mt-1">{c.type}</p>
+                  </div>
+                  <button
+                    onClick={() => handleToggleStatus(c)}
+                    title={`Click to ${c.status === "Active" ? "deactivate" : "activate"}`}
+                    className={`badge ${
+                      c.status === "Active" ? "badge-success text-white" : "badge-neutral"
+                    } text-[10px] font-bold cursor-pointer hover:opacity-80 transition-opacity`}
+                  >
+                    {c.status}
+                  </button>
                 </div>
-                <span className={`badge ${c.status === "Active" ? "badge-success text-white" : "badge-neutral"} text-[10px] font-bold`}>
-                  {c.status}
-                </span>
-              </div>
 
-              {/* Discount & Min Order Details */}
-              <div className="space-y-2 text-xs py-3 border-b border-slate-100">
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-500">Discount:</span>
-                  <strong className="text-slate-900 text-base font-black font-mono">
-                    {c.type === "Fixed Amount" ? `৳${c.discountValue}` : `${c.discountValue}% OFF`}
-                  </strong>
-                </div>
+                {/* Discount & Min Order Details */}
+                <div className="space-y-2 text-xs py-3 border-b border-slate-100">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500">Discount:</span>
+                    <strong className="text-slate-900 text-base font-black font-mono">
+                      {c.type === "Fixed Amount" ? `৳${c.discountValue}` : `${c.discountValue}% OFF`}
+                    </strong>
+                  </div>
 
-                <div className="flex justify-between items-center text-slate-600">
-                  <span>Min Purchase Order:</span>
-                  <strong className="text-slate-900 font-mono">৳{c.minOrder.toLocaleString()}</strong>
-                </div>
-
-                {c.maxDiscount && (
                   <div className="flex justify-between items-center text-slate-600">
-                    <span>Max Discount Cap:</span>
-                    <strong className="text-slate-900 font-mono">৳{c.maxDiscount.toLocaleString()}</strong>
+                    <span>Min Purchase Order:</span>
+                    <strong className="text-slate-900 font-mono">৳{(c.minOrder || 0).toLocaleString()}</strong>
                   </div>
-                )}
 
-                <div className="flex justify-between items-center text-slate-600">
-                  <span>Usage Limit:</span>
-                  <strong className="text-slate-900 font-mono">{c.usedCount} / {c.usageLimit}</strong>
+                  {c.maxDiscount ? (
+                    <div className="flex justify-between items-center text-slate-600">
+                      <span>Max Discount Cap:</span>
+                      <strong className="text-slate-900 font-mono">৳{c.maxDiscount.toLocaleString()}</strong>
+                    </div>
+                  ) : null}
+
+                  <div className="flex justify-between items-center text-slate-600">
+                    <span>Usage Limit:</span>
+                    <strong className="text-slate-900 font-mono">
+                      {c.usedCount || 0} / {c.usageLimit}
+                    </strong>
+                  </div>
+
+                  <div className="flex justify-between items-center text-slate-600">
+                    <span>Valid Expiry:</span>
+                    <strong className="text-slate-800">{c.expiry}</strong>
+                  </div>
                 </div>
 
-                <div className="flex justify-between items-center text-slate-600">
-                  <span>Valid Expiry:</span>
-                  <strong className="text-slate-800">{c.expiry}</strong>
+                {/* Advanced Targeting Rules Breakdown */}
+                <div className="pt-3 space-y-1.5 text-[11px]">
+                  <span className="font-extrabold text-slate-400 uppercase text-[10px] tracking-wider block">
+                    Advanced Targeting Rules
+                  </span>
+
+                  {c.isFirstOrderOnly && (
+                    <div className="badge badge-warning badge-xs font-bold gap-1 text-[10px]">
+                      ⚡ First Order Only
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-1 text-slate-700 font-medium">
+                    <Layers className="w-3 h-3 text-primary shrink-0" /> Category: <strong>{c.categoryScope || "All"}</strong>
+                  </div>
+
+                  <div className="flex items-center gap-1 text-slate-700 font-medium">
+                    <ShoppingBag className="w-3 h-3 text-primary shrink-0" /> Product: <strong>{c.productScope || "All"}</strong>
+                  </div>
+
+                  <div className="flex items-center gap-1 text-slate-700 font-medium">
+                    <UserCheck className="w-3 h-3 text-primary shrink-0" /> Audience: <strong>{c.customerAudience || "All"}</strong>
+                  </div>
+
+                  <div className="text-slate-500 text-[10px] pt-0.5">
+                    Limit per user: <strong>{c.usagePerUser || 1} time(s)</strong>
+                  </div>
                 </div>
               </div>
 
-              {/* Advanced Targeting Rules Breakdown */}
-              <div className="pt-3 space-y-1.5 text-[11px]">
-                <span className="font-extrabold text-slate-400 uppercase text-[10px] tracking-wider block">
-                  Advanced Targeting Rules
-                </span>
-
-                {c.isFirstOrderOnly && (
-                  <div className="badge badge-warning badge-xs font-bold gap-1 text-[10px]">
-                    ⚡ First Order Only
-                  </div>
-                )}
-
-                <div className="flex items-center gap-1 text-slate-700 font-medium">
-                  <Layers className="w-3 h-3 text-primary" /> Category: <strong>{c.categoryScope}</strong>
-                </div>
-
-                <div className="flex items-center gap-1 text-slate-700 font-medium">
-                  <ShoppingBag className="w-3 h-3 text-primary" /> Product: <strong>{c.productScope}</strong>
-                </div>
-
-                <div className="flex items-center gap-1 text-slate-700 font-medium">
-                  <UserCheck className="w-3 h-3 text-primary" /> Audience: <strong>{c.customerAudience}</strong>
-                </div>
-
-                <div className="text-slate-500 text-[10px] pt-0.5">
-                  Limit per user: <strong>{c.usagePerUser} time(s)</strong>
-                </div>
+              {/* Actions Footer */}
+              <div className="pt-3 border-t border-slate-100 flex items-center gap-2">
+                <button
+                  onClick={() => handleCopyCode(c.code)}
+                  className="btn btn-xs btn-outline gap-1 font-bold rounded-lg flex-1"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  {copiedCode === c.code ? "Copied!" : "Copy"}
+                </button>
+                <button
+                  onClick={() => handleDeleteCoupon(c)}
+                  className="btn btn-xs btn-ghost text-error hover:bg-error/10 font-bold rounded-lg px-2"
+                  title="Delete Coupon"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
+          ))}
+        </div>
+      )}
 
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-              <button
-                onClick={() => handleCopyCode(c.code)}
-                className="btn btn-xs btn-outline gap-1 font-bold rounded-lg w-full"
-              >
-                <Copy className="w-3.5 h-3.5" />
-                {copiedCode === c.code ? "Copied!" : "Copy Code"}
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* CREATE NEW COUPON MODAL (All Basic & Advanced Options) */}
+      {/* CREATE NEW COUPON MODAL */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
           <div className="bg-white rounded-3xl max-w-2xl w-full p-6 space-y-6 shadow-2xl border border-slate-200 max-h-[92vh] overflow-y-auto">
@@ -322,7 +485,10 @@ export default function AdminCouponsPage() {
                 <h3 className="font-black text-2xl text-slate-900">Create New Coupon</h3>
                 <p className="text-xs text-slate-500">Configure discount code, purchase limits, and advanced targeting rules</p>
               </div>
-              <button onClick={() => setIsCreateModalOpen(false)} className="btn btn-ghost btn-circle btn-xs">
+              <button
+                onClick={() => setIsCreateModalOpen(false)}
+                className="btn btn-ghost btn-circle btn-xs"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -338,9 +504,11 @@ export default function AdminCouponsPage() {
                     <input
                       type="text"
                       required
-                      placeholder="e.g. SAVE500"
+                      placeholder="e.g. MEGA100, SUMMER20"
                       value={newCoupon.code}
-                      onChange={(e) => setNewCoupon({ ...newCoupon, code: e.target.value.toUpperCase() })}
+                      onChange={(e) =>
+                        setNewCoupon({ ...newCoupon, code: e.target.value.toUpperCase().replace(/\s+/g, "") })
+                      }
                       className="input input-sm input-bordered w-full font-mono font-black text-slate-900 focus:outline-none rounded-xl uppercase"
                     />
                   </div>
@@ -365,7 +533,7 @@ export default function AdminCouponsPage() {
                       type="number"
                       min={1}
                       required
-                      placeholder="500"
+                      placeholder="100"
                       value={newCoupon.discountValue}
                       onChange={(e) => setNewCoupon({ ...newCoupon, discountValue: Number(e.target.value) })}
                       className="input input-sm input-bordered w-full font-mono font-bold focus:outline-none rounded-xl"
@@ -377,7 +545,7 @@ export default function AdminCouponsPage() {
                     <input
                       type="number"
                       min={0}
-                      placeholder="3000"
+                      placeholder="500"
                       value={newCoupon.minOrder}
                       onChange={(e) => setNewCoupon({ ...newCoupon, minOrder: Number(e.target.value) })}
                       className="input input-sm input-bordered w-full font-mono font-bold focus:outline-none rounded-xl"
@@ -507,9 +675,10 @@ export default function AdminCouponsPage() {
                 </button>
                 <button
                   type="submit"
+                  disabled={isSubmitting}
                   className="btn btn-sm btn-primary font-bold rounded-xl"
                 >
-                  Create & Save Coupon
+                  {isSubmitting ? "Creating..." : "Create & Save Coupon"}
                 </button>
               </div>
             </form>
