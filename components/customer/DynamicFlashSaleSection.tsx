@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Flame, Star, ShoppingBag, Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { addToCart } from "@/lib/cart-store";
+import { Flame, Star, ShoppingBag, Clock, ChevronLeft, ChevronRight, CheckCircle2, ShoppingCart } from "lucide-react";
 
 interface FlashSaleCampaign {
   title: string;
@@ -29,9 +31,12 @@ interface FlashSaleProduct {
 }
 
 export default function DynamicFlashSaleSection() {
+  const router = useRouter();
   const [items, setItems] = useState<FlashSaleProduct[]>([]);
   const [campaign, setCampaign] = useState<FlashSaleCampaign | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [claimingId, setClaimingId] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Live countdown state
@@ -104,6 +109,49 @@ export default function DynamicFlashSaleSection() {
     });
   };
 
+  // Claim Deal Handler -> Adds product to cart at Flash Price
+  const handleClaimDeal = async (p: FlashSaleProduct) => {
+    setClaimingId(p.id);
+
+    // 1. Add to localStorage cart
+    const result = addToCart({
+      id: `flash-${p.id}`,
+      name: p.name,
+      price: p.flashPrice,
+      originalPrice: p.originalPrice,
+      quantity: 1,
+      maxStock: Math.max(1, p.allocatedStock - (p.soldStock || 0)),
+      sku: `FS-${p.id.toUpperCase()}`,
+      image: p.image || "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=500&auto=format&fit=crop&q=80",
+      color: "Flash Edition",
+      isFlashDeal: true
+    });
+
+    // 2. Optimistically increment sold count in DB & local state
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === p.id ? { ...item, soldStock: (item.soldStock || 0) + 1 } : item
+      )
+    );
+
+    try {
+      fetch("/api/flash-deals", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: p.id, incrementSold: true })
+      });
+    } catch (e) {
+      console.error("Failed to increment flash sale claim:", e);
+    }
+
+    setToastMessage(result.message);
+    setTimeout(() => setToastMessage(null), 3000);
+    setClaimingId(null);
+
+    // Navigate to Cart page to view claimed item
+    router.push("/cart");
+  };
+
   // If campaign is set to inactive, or no items, don't show or hide
   if (!isLoading && campaign && !campaign.isActive) {
     return null;
@@ -113,6 +161,16 @@ export default function DynamicFlashSaleSection() {
 
   return (
     <section className="max-w-7xl mx-auto px-4" id="flash-sale">
+      {/* Toast Alert */}
+      {toastMessage && (
+        <div className="toast toast-top toast-end z-50">
+          <div className="alert alert-success shadow-lg text-white font-bold text-xs py-2 px-4 rounded-xl flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4" />
+            <span>{toastMessage}</span>
+          </div>
+        </div>
+      )}
+
       <div className="bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 text-white p-6 md:p-8 rounded-3xl shadow-xl space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/20 pb-4">
           <div className="flex items-center gap-3">
@@ -210,6 +268,7 @@ export default function DynamicFlashSaleSection() {
               const rating = p.rating || 4.8;
               const sold = p.soldStock || 0;
               const total = p.allocatedStock || 50;
+              const isClaiming = claimingId === p.id;
 
               return (
                 <div
@@ -260,12 +319,18 @@ export default function DynamicFlashSaleSection() {
                     </div>
                   </div>
 
-                  <Link
-                    href={`/products`}
-                    className="btn btn-error text-white btn-sm btn-block rounded-xl font-bold gap-1 mt-2 shadow-sm"
+                  <button
+                    onClick={() => handleClaimDeal(p)}
+                    disabled={isClaiming || sold >= total}
+                    className="btn btn-error text-white btn-sm btn-block rounded-xl font-bold gap-1.5 mt-2 shadow-sm disabled:opacity-50"
                   >
-                    <ShoppingBag className="w-4 h-4" /> Claim Deal
-                  </Link>
+                    {isClaiming ? (
+                      <span className="loading loading-spinner loading-xs"></span>
+                    ) : (
+                      <ShoppingCart className="w-4 h-4" />
+                    )}
+                    {sold >= total ? "Sold Out" : "Claim Deal (Add to Cart)"}
+                  </button>
                 </div>
               );
             })}
@@ -277,6 +342,7 @@ export default function DynamicFlashSaleSection() {
               const rating = p.rating || 4.8;
               const sold = p.soldStock || 0;
               const total = p.allocatedStock || 50;
+              const isClaiming = claimingId === p.id;
 
               return (
                 <div
@@ -327,12 +393,18 @@ export default function DynamicFlashSaleSection() {
                     </div>
                   </div>
 
-                  <Link
-                    href={`/products`}
-                    className="btn btn-error text-white btn-sm btn-block rounded-xl font-bold gap-1 mt-2 shadow-sm"
+                  <button
+                    onClick={() => handleClaimDeal(p)}
+                    disabled={isClaiming || sold >= total}
+                    className="btn btn-error text-white btn-sm btn-block rounded-xl font-bold gap-1.5 mt-2 shadow-sm disabled:opacity-50"
                   >
-                    <ShoppingBag className="w-4 h-4" /> Claim Deal
-                  </Link>
+                    {isClaiming ? (
+                      <span className="loading loading-spinner loading-xs"></span>
+                    ) : (
+                      <ShoppingCart className="w-4 h-4" />
+                    )}
+                    {sold >= total ? "Sold Out" : "Claim Deal (Add to Cart)"}
+                  </button>
                 </div>
               );
             })}

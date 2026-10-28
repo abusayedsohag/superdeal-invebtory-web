@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import { getStoredCart } from "@/lib/cart-store";
 import {
   ShoppingBag,
   Heart,
@@ -53,6 +54,20 @@ export default function CustomerNavbar() {
   const [category, setCategory] = useState<
     { id: string; name: string }[]
   >([]);
+  const [cartCount, setCartCount] = useState<number>(3);
+
+  useEffect(() => {
+    // Sync cart badge count
+    const updateCartCount = () => {
+      const items = getStoredCart();
+      const totalUnits = items.reduce((sum, item) => sum + (item.quantity || 1), 0);
+      setCartCount(totalUnits);
+    };
+
+    updateCartCount();
+    window.addEventListener("cartUpdated", updateCartCount);
+    return () => window.removeEventListener("cartUpdated", updateCartCount);
+  }, []);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -124,7 +139,9 @@ export default function CustomerNavbar() {
 
           <Link href="/cart" className="btn btn-ghost btn-circle btn-sm sm:btn-md relative">
             <ShoppingCart className="w-4 h-4 sm:w-6 sm:h-6 text-base-content" />
-            <span className="badge badge-xs sm:badge-sm badge-primary absolute -top-1 -right-1">2</span>
+            <span className="badge badge-xs sm:badge-sm badge-primary absolute -top-1 -right-1 font-bold">
+              {cartCount}
+            </span>
           </Link>
 
           <div className="dropdown dropdown-end">

@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getStoredCart, saveStoredCart, CartItem } from "@/lib/cart-store";
 import { 
   Trash2, 
   ShoppingBag, 
@@ -15,43 +16,25 @@ import {
   AlertTriangle, 
   CheckCircle2, 
   X,
-  Percent
+  Percent,
+  Zap
 } from "lucide-react";
 
 export default function CartPage() {
-  // Cart Items State with Stock Validation
-  const [items, setItems] = useState([
-    {
-      id: "1",
-      name: "Wireless Noise-Canceling Premium Headphones",
-      price: 199.99,
-      quantity: 1,
-      maxStock: 18,
-      sku: "SD-HEAD-9081",
-      image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&auto=format&fit=crop&q=80",
-      color: "Space Gray"
-    },
-    {
-      id: "2",
-      name: "Ultra Smart Watch Series 7 Pro",
-      price: 149.00,
-      quantity: 2,
-      maxStock: 25,
-      sku: "SD-WTC-7721",
-      image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=80",
-      color: "Matte Black"
-    },
-    {
-      id: "3",
-      name: "Ergonomic Mechanical Gaming Keyboard",
-      price: 89.99,
-      quantity: 1,
-      maxStock: 4,
-      sku: "SD-KEY-1022",
-      image: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=500&auto=format&fit=crop&q=80",
-      color: "RGB Black"
-    }
-  ]);
+  // Cart Items State synced with localStorage
+  const [items, setItems] = useState<CartItem[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    setItems(getStoredCart());
+    setIsLoaded(true);
+
+    const handleUpdate = () => {
+      setItems(getStoredCart());
+    };
+    window.addEventListener("cartUpdated", handleUpdate);
+    return () => window.removeEventListener("cartUpdated", handleUpdate);
+  }, []);
 
   // Shipping Method State
   const [shippingMethod, setShippingMethod] = useState<"standard" | "express" | "pickup">("standard");
@@ -71,8 +54,8 @@ export default function CartPage() {
   // Update Quantity with Stock Validation
   const updateQuantity = (id: string, delta: number) => {
     setStockWarning(null);
-    setItems((prev) =>
-      prev.map((item) => {
+    setItems((prev) => {
+      const updated = prev.map((item) => {
         if (item.id === id) {
           const newQty = item.quantity + delta;
           if (newQty > item.maxStock) {
@@ -82,13 +65,19 @@ export default function CartPage() {
           return { ...item, quantity: Math.max(1, newQty) };
         }
         return item;
-      })
-    );
+      });
+      saveStoredCart(updated);
+      return updated;
+    });
   };
 
   // Remove Item
   const removeItem = (id: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
+    setItems((prev) => {
+      const updated = prev.filter((item) => item.id !== id);
+      saveStoredCart(updated);
+      return updated;
+    });
   };
 
   // Subtotal Calculation
@@ -252,14 +241,23 @@ export default function CartPage() {
                           <div className="flex items-center gap-3">
                             <img src={item.image} alt={item.name} className="w-14 h-14 rounded-xl object-cover border border-base-200 shrink-0" />
                             <div>
-                              <Link href={`/products/1`} className="font-bold line-clamp-1 hover:text-primary transition-colors">
-                                {item.name}
-                              </Link>
-                              <p className="text-xs text-base-content/60">Color: {item.color} • SKU: {item.sku}</p>
+                              <div className="flex items-center gap-2">
+                                <Link href={`/products`} className="font-bold line-clamp-1 hover:text-primary transition-colors">
+                                  {item.name}
+                                </Link>
+                                {item.isFlashDeal && (
+                                  <span className="badge badge-error text-white font-extrabold text-[10px] gap-1 px-1.5 py-0.5">
+                                    <Zap className="w-3 h-3 fill-current" /> Flash Deal
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-base-content/60">
+                                {item.color ? `Color: ${item.color} • ` : ""}{item.sku ? `SKU: ${item.sku}` : ""}
+                              </p>
                             </div>
                           </div>
                         </td>
-                        <td className="font-bold">\${item.price.toFixed(2)}</td>
+                        <td className="font-bold">৳{item.price.toFixed(2)}</td>
                         <td>
                           <span className={`badge badge-xs font-bold ${isMaxStock ? "badge-warning" : "badge-success text-white"}`}>
                             {isMaxStock ? `Max (${item.maxStock})` : `In Stock (${item.maxStock})`}
@@ -280,7 +278,7 @@ export default function CartPage() {
                             </button>
                           </div>
                         </td>
-                        <td className="font-extrabold text-primary">\${(item.price * item.quantity).toFixed(2)}</td>
+                        <td className="font-extrabold text-primary">৳{(item.price * item.quantity).toFixed(2)}</td>
                         <td>
                           <button onClick={() => removeItem(item.id)} className="btn btn-ghost btn-xs btn-circle text-error hover:bg-error/10">
                             <Trash2 className="w-4 h-4" />
