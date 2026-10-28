@@ -1,99 +1,394 @@
-import Link from "next/link";
-import { Package, Clock, CheckCircle, Truck, FileText, ArrowRight } from "lucide-react";
+"use client";
 
-const customerOrders = [
-  {
-    id: "ORD-9982",
-    date: "Oct 06, 2026",
-    status: "Delivered",
-    statusColor: "badge-success text-white",
-    total: 497.99,
-    itemsCount: 3,
-    paymentMethod: "Credit Card (ending 4242)",
-    items: [
-      { name: "Wireless Noise-Canceling Headphones", price: 199.99, qty: 1, image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200&auto=format&fit=crop&q=80" },
-      { name: "Ultra Smart Watch Series 7 Pro", price: 149.00, qty: 2, image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200&auto=format&fit=crop&q=80" }
-    ]
-  },
-  {
-    id: "ORD-9950",
-    date: "Sep 28, 2026",
-    status: "In Transit",
-    statusColor: "badge-primary",
-    total: 89.99,
-    itemsCount: 1,
-    paymentMethod: "bKash Mobile Payment",
-    items: [
-      { name: "Ergonomic Mechanical Gaming Keyboard", price: 89.99, qty: 1, image: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=200&auto=format&fit=crop&q=80" }
-    ]
-  }
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { 
+  Package, 
+  Clock, 
+  CheckCircle, 
+  Truck, 
+  FileText, 
+  ArrowRight,
+  Search,
+  Filter,
+  ShoppingBag,
+  RefreshCw,
+  ExternalLink,
+  ChevronRight,
+  MapPin,
+  Phone,
+  ShieldCheck,
+  X
+} from "lucide-react";
+
+interface OrderItem {
+  id: string;
+  name: string;
+  qty: number;
+  price: number;
+  image?: string;
+  sku?: string;
+  isFlashDeal?: boolean;
+}
+
+interface CustomerOrder {
+  _id?: string;
+  id: string;
+  customer: string;
+  phone: string;
+  email?: string;
+  district: string;
+  upazila: string;
+  address?: string;
+  items: OrderItem[];
+  subtotal: number;
+  shipping: number;
+  tax: number;
+  couponCode?: string;
+  couponDiscount?: number;
+  total: number;
+  paymentMethod: string;
+  paymentStatus: "Pending" | "Paid" | "Failed";
+  orderStatus: string;
+  trackingCode?: string;
+  createdAt: string;
+  dateFormatted?: string;
+}
+
+const statusProgressSteps = [
+  "Pending",
+  "Confirmed",
+  "Processing",
+  "Packed",
+  "Shipped",
+  "Out for Delivery",
+  "Delivered"
 ];
 
 export default function MyOrdersPage() {
+  const [orders, setOrders] = useState<CustomerOrder[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [trackingModalOrder, setTrackingModalOrder] = useState<CustomerOrder | null>(null);
+
+  // Fetch orders from MongoDB
+  const fetchCustomerOrders = async (showLoading = true) => {
+    if (showLoading) setIsLoading(true);
+    else setIsRefreshing(true);
+
+    try {
+      const res = await fetch("/api/orders?limit=50", { cache: "no-store" });
+      const data = await res.json();
+      if (data.success && Array.isArray(data.orders)) {
+        setOrders(data.orders);
+      }
+    } catch (err) {
+      console.error("Failed to load customer orders:", err);
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCustomerOrders();
+  }, []);
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "Pending":
+        return "badge-warning text-slate-900";
+      case "Confirmed":
+        return "badge-info text-white";
+      case "Processing":
+        return "badge-accent text-slate-900";
+      case "Packed":
+        return "badge-primary text-white";
+      case "Shipped":
+        return "badge-secondary text-white";
+      case "Out for Delivery":
+        return "bg-orange-500 text-white";
+      case "Delivered":
+        return "badge-success text-white";
+      case "Cancelled":
+        return "badge-error text-white";
+      default:
+        return "badge-ghost";
+    }
+  };
+
+  const getStepIndex = (status: string) => {
+    return statusProgressSteps.indexOf(status);
+  };
+
+  const filteredOrders = orders.filter((o) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase().trim();
+    return (
+      o.id.toLowerCase().includes(q) ||
+      o.phone.includes(q) ||
+      o.items.some((item) => item.name.toLowerCase().includes(q))
+    );
+  });
+
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
-      {/* Header */}
+    <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
+      {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-base-200 pb-4">
         <div>
-          <h1 className="text-3xl font-black">My Order History</h1>
-          <p className="text-xs text-base-content/60">Track your past purchases and shipment statuses</p>
+          <h1 className="text-2xl sm:text-3xl font-black text-base-content flex items-center gap-2">
+            <Package className="w-8 h-8 text-primary" /> My Order History & Tracking
+          </h1>
+          <p className="text-xs text-base-content/60">
+            Real-time tracking of your purchases, live shipment statuses, and official invoices
+          </p>
         </div>
-        <Link href="/products" className="btn btn-primary btn-sm rounded-xl">
-          Start Shopping
-        </Link>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => fetchCustomerOrders(false)}
+            disabled={isRefreshing}
+            className="btn btn-outline btn-sm gap-2 font-bold rounded-xl"
+            title="Refresh order history"
+          >
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
+            Refresh
+          </button>
+          <Link href="/products" className="btn btn-primary btn-sm rounded-xl font-bold gap-2">
+            <ShoppingBag className="w-4 h-4" /> Start Shopping
+          </Link>
+        </div>
+      </div>
+
+      {/* Search & Filter Bar */}
+      <div className="bg-base-100 p-4 rounded-2xl border border-base-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="relative w-full sm:w-80">
+          <Search className="w-4 h-4 text-base-content/40 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            placeholder="Search by Order ID or Product name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="input input-sm input-bordered w-full pl-9 text-xs focus:outline-none rounded-xl"
+          />
+        </div>
+
+        <div className="text-xs text-base-content/60 font-semibold">
+          Showing <strong>{filteredOrders.length}</strong> orders
+        </div>
       </div>
 
       {/* Orders Cards List */}
-      <div className="space-y-6">
-        {customerOrders.map((order) => (
-          <div key={order.id} className="bg-base-100 rounded-3xl border border-base-200 p-6 shadow-xs space-y-4">
-            {/* Top Info Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-base-200 pb-4 text-xs">
-              <div className="space-x-4">
-                <span className="font-extrabold text-sm text-base-content">{order.id}</span>
-                <span className="text-base-content/60">Placed on: <strong>{order.date}</strong></span>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className={`badge ${order.statusColor} font-bold px-3 py-1 text-xs`}>
-                  {order.status}
-                </span>
-                <span className="font-extrabold text-base text-primary font-mono">\${order.total.toFixed(2)}</span>
-              </div>
-            </div>
+      {isLoading ? (
+        <div className="py-20 text-center space-y-3">
+          <span className="loading loading-spinner loading-lg text-primary"></span>
+          <p className="text-xs font-bold text-base-content/60">Loading your orders from database...</p>
+        </div>
+      ) : filteredOrders.length === 0 ? (
+        <div className="text-center py-16 space-y-4 bg-base-100 rounded-3xl border border-base-200">
+          <Package className="w-16 h-16 text-base-content/25 mx-auto" />
+          <h2 className="text-2xl font-bold">No Orders Found</h2>
+          <p className="text-xs text-base-content/60 max-w-sm mx-auto">
+            {searchQuery
+              ? `No orders match "${searchQuery}". Please check your search keyword.`
+              : "You haven't placed any orders yet. Explore our store to place your first order!"}
+          </p>
+          <Link href="/products" className="btn btn-primary rounded-xl font-bold btn-sm">
+            Explore Products
+          </Link>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {filteredOrders.map((order) => {
+            const currentStep = getStepIndex(order.orderStatus);
 
-            {/* Order Items preview */}
-            <div className="divide-y divide-base-200">
-              {order.items.map((item, idx) => (
-                <div key={idx} className="py-3 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <img src={item.image} alt={item.name} className="w-14 h-14 rounded-xl object-cover border border-base-200" />
-                    <div>
-                      <h4 className="font-bold text-sm text-base-content">{item.name}</h4>
-                      <p className="text-xs text-base-content/60">Quantity: {item.qty} × \${item.price}</p>
+            return (
+              <div
+                key={order.id}
+                className="bg-base-100 rounded-3xl border border-base-200 p-6 shadow-xs space-y-5 hover:border-primary/40 transition-colors"
+              >
+                {/* Top Info Bar */}
+                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-base-200 pb-4 text-xs">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-black text-base text-primary font-mono">{order.id}</span>
+                      <span className={`badge ${getStatusBadge(order.orderStatus)} font-bold px-2.5 py-0.5 text-[10px]`}>
+                        {order.orderStatus}
+                      </span>
+                    </div>
+                    <p className="text-base-content/60 text-[11px]">
+                      Placed on: <strong>{order.dateFormatted || new Date(order.createdAt).toLocaleDateString()}</strong>
+                    </p>
+                  </div>
+
+                  <div className="text-right">
+                    <span className="text-[10px] text-base-content/50 uppercase block font-bold">Total Bill</span>
+                    <span className="font-extrabold text-xl text-base-content font-mono">
+                      ৳{order.total.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Live Order Timeline Progress (Stepper) */}
+                {currentStep >= 0 && order.orderStatus !== "Cancelled" && (
+                  <div className="bg-base-200/50 p-4 rounded-2xl border border-base-200 space-y-2">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-base-content/50 flex items-center gap-1.5">
+                      <Truck className="w-3.5 h-3.5 text-primary" /> Delivery Progress
+                    </span>
+                    <div className="overflow-x-auto pb-1">
+                      <ul className="steps steps-horizontal w-full min-w-[500px] text-[10px] font-bold">
+                        {statusProgressSteps.map((stepName, idx) => (
+                          <li
+                            key={stepName}
+                            className={`step ${idx <= currentStep ? "step-primary" : ""}`}
+                          >
+                            {stepName}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   </div>
-                  <Link href={`/products/1`} className="btn btn-ghost btn-xs text-primary font-bold">
-                    View Product
-                  </Link>
+                )}
+
+                {/* Order Items Preview */}
+                <div className="divide-y divide-base-200">
+                  {order.items.map((item, idx) => (
+                    <div key={idx} className="py-3 flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={item.image || "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=200&auto=format&fit=crop&q=80"}
+                          alt={item.name}
+                          className="w-14 h-14 rounded-2xl object-cover border border-base-200 shrink-0"
+                        />
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-bold text-sm text-base-content line-clamp-1">{item.name}</h4>
+                            {item.isFlashDeal && (
+                              <span className="badge badge-error text-white font-extrabold text-[9px] px-1.5">
+                                ⚡ Flash
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-base-content/60 font-mono mt-0.5">
+                            Qty: {item.qty} × ৳{item.price.toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+
+                      <span className="font-mono font-bold text-sm text-base-content shrink-0">
+                        ৳{(item.qty * item.price).toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-              ))}
+
+                {/* Bottom Actions Bar */}
+                <div className="pt-4 border-t border-base-200 flex flex-wrap items-center justify-between gap-4 text-xs">
+                  <div className="space-y-0.5">
+                    <span className="text-base-content/70">
+                      Payment: <strong>{order.paymentMethod}</strong> (
+                      <span className={`font-bold ${order.paymentStatus === "Paid" ? "text-success" : "text-warning"}`}>
+                        {order.paymentStatus}
+                      </span>
+                      )
+                    </span>
+                    <p className="text-[11px] text-base-content/50">
+                      Destination: {order.district}, {order.upazila}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={`/admin/orders/invoice/${order.id}`}
+                      target="_blank"
+                      className="btn btn-xs btn-outline gap-1 rounded-lg font-bold"
+                    >
+                      <FileText className="w-3.5 h-3.5 text-primary" /> Invoice
+                    </a>
+                    <button
+                      onClick={() => setTrackingModalOrder(order)}
+                      className="btn btn-xs btn-primary gap-1 rounded-lg font-bold shadow-sm"
+                    >
+                      <Truck className="w-3.5 h-3.5" /> Track Shipment
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* TRACKING MODAL */}
+      {trackingModalOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+          <div className="bg-base-100 rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-2xl border border-base-200">
+            <div className="flex items-center justify-between border-b border-base-200 pb-3">
+              <div>
+                <h3 className="font-black text-xl flex items-center gap-2">
+                  <Truck className="w-5 h-5 text-primary" /> Package Tracking
+                </h3>
+                <p className="text-xs text-base-content/60">
+                  Live tracking status for Order #{trackingModalOrder.id}
+                </p>
+              </div>
+              <button
+                onClick={() => setTrackingModalOrder(null)}
+                className="btn btn-ghost btn-circle btn-xs"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            {/* Bottom Actions Bar */}
-            <div className="pt-4 border-t border-base-200 flex flex-wrap items-center justify-between gap-4 text-xs">
-              <span className="text-base-content/60">Payment: <strong>{order.paymentMethod}</strong></span>
-              <div className="flex items-center gap-2">
-                <button className="btn btn-xs btn-outline gap-1">
-                  <FileText className="w-3.5 h-3.5" /> Download Invoice
-                </button>
-                <button className="btn btn-xs btn-primary gap-1">
-                  <Truck className="w-3.5 h-3.5" /> Track Package
-                </button>
+            <div className="space-y-4 text-xs">
+              <div className="p-4 bg-primary/10 rounded-2xl border border-primary/20 space-y-1">
+                <span className="text-[10px] font-extrabold uppercase text-primary tracking-wider">
+                  Current Status
+                </span>
+                <p className="text-lg font-black text-primary flex items-center gap-2">
+                  <Clock className="w-5 h-5" /> {trackingModalOrder.orderStatus}
+                </p>
+                <p className="text-base-content/70">
+                  Recipient: <strong>{trackingModalOrder.customer}</strong> ({trackingModalOrder.phone})
+                </p>
+                <p className="text-base-content/70">
+                  Address: {trackingModalOrder.address || "Main address"}, {trackingModalOrder.district}
+                </p>
+              </div>
+
+              <div className="space-y-3 pl-2 border-l-2 border-primary/40">
+                <div className="space-y-1">
+                  <p className="font-bold text-sm text-base-content flex items-center gap-1.5">
+                    <CheckCircle className="w-4 h-4 text-success" /> Order Verified & Received
+                  </p>
+                  <p className="text-[11px] text-base-content/60">
+                    Order was successfully created and assigned to fulfillment hub.
+                  </p>
+                </div>
+
+                <div className="space-y-1">
+                  <p className="font-bold text-sm text-base-content flex items-center gap-1.5">
+                    <Truck className="w-4 h-4 text-primary" /> Logistics Dispatched
+                  </p>
+                  <p className="text-[11px] text-base-content/60">
+                    Assigned Courier Partner: Steadfast / Express Hub.
+                  </p>
+                </div>
               </div>
             </div>
+
+            <div className="pt-3 border-t border-base-200 flex justify-end">
+              <button
+                onClick={() => setTrackingModalOrder(null)}
+                className="btn btn-sm btn-primary rounded-xl font-bold"
+              >
+                Close
+              </button>
+            </div>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

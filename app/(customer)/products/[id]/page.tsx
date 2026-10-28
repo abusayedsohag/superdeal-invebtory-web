@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { addToCart } from "@/lib/cart-store";
 import { 
   Star, 
   Heart, 
@@ -14,15 +15,18 @@ import {
   Minus, 
   Plus, 
   Check, 
-  ThumbsUp 
+  ThumbsUp,
+  CheckCircle2
 } from "lucide-react";
 import ProductRecommendation from "@/components/customer/ProductRecommendation";
 
 function ProductDetailContent() {
+  const router = useRouter();
   const params = useParams();
   const routeId = params?.id as string;
 
   const [selectedImage, setSelectedImage] = useState(0);
+  const [selectedColor, setSelectedColor] = useState<string>("Space Gray");
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState("description");
   const [isWishlisted, setIsWishlisted] = useState(false);
@@ -33,6 +37,32 @@ function ProductDetailContent() {
     const msg = !isWishlisted ? `❤️ Added "${product.name}" to your Wishlist!` : `Removed "${product.name}" from your Wishlist.`;
     setToastMsg(msg);
     setTimeout(() => setToastMsg(null), 3000);
+  };
+
+  const handleAddToCart = (redirect = false) => {
+    const result = addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      originalPrice: product.originalPrice,
+      quantity: quantity,
+      maxStock: Math.max(1, product.stock),
+      sku: product.sku,
+      image: product.images[selectedImage] || product.images[0],
+      color: selectedColor
+    });
+
+    setToastMsg(result.message);
+    setTimeout(() => setToastMsg(null), 3000);
+
+    if (redirect) {
+      router.push("/cart");
+    }
+  };
+
+  const handleBuyNow = () => {
+    handleAddToCart(false);
+    router.push("/checkout");
   };
 
   const [product, setProduct] = useState({
@@ -278,61 +308,70 @@ function ProductDetailContent() {
             ))}
           </ul>
 
-          {/* Color Variant Selector */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-base-content/60">Select Color</label>
-            <div className="flex items-center gap-3">
-              {product.colors.map((color, idx) => (
-                <button 
-                  key={idx} 
-                  className={`btn btn-sm ${idx === 0 ? "btn-primary" : "btn-outline border-base-300"}`}
-                >
-                  {color}
-                </button>
-              ))}
+            {/* Color Variant Selector */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-base-content/60">Select Color</label>
+              <div className="flex items-center gap-3">
+                {product.colors.map((color, idx) => (
+                  <button 
+                    key={idx} 
+                    type="button"
+                    onClick={() => setSelectedColor(color)}
+                    className={`btn btn-sm ${selectedColor === color ? "btn-primary" : "btn-outline border-base-300"}`}
+                  >
+                    {color}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* Quantity & CTA Buttons */}
-          <div className="space-y-4 pt-2">
-            <div className="flex items-center gap-4">
-              <div className="join border border-base-300 rounded-xl">
+            {/* Quantity & CTA Buttons */}
+            <div className="space-y-4 pt-2">
+              <div className="flex items-center gap-4">
+                <div className="join border border-base-300 rounded-xl">
+                  <button 
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))} 
+                    className="btn btn-sm btn-ghost join-item"
+                  >
+                    <Minus className="w-3.5 h-3.5" />
+                  </button>
+                  <span className="join-item px-4 flex items-center font-bold text-sm bg-base-100">{quantity}</span>
+                  <button 
+                    onClick={() => setQuantity(quantity + 1)} 
+                    disabled={quantity >= product.stock}
+                    className="btn btn-sm btn-ghost join-item"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
                 <button 
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))} 
-                  className="btn btn-sm btn-ghost join-item"
+                  onClick={toggleWishlist}
+                  className={`btn btn-circle btn-sm ${isWishlisted ? "btn-secondary" : "btn-outline"}`}
+                  title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
                 >
-                  <Minus className="w-3.5 h-3.5" />
+                  <Heart className={`w-4 h-4 ${isWishlisted ? "fill-white text-white" : "text-rose-500"}`} />
                 </button>
-                <span className="join-item px-4 flex items-center font-bold text-sm bg-base-100">{quantity}</span>
-                <button 
-                  onClick={() => setQuantity(quantity + 1)} 
-                  className="btn btn-sm btn-ghost join-item"
-                >
-                  <Plus className="w-3.5 h-3.5" />
+                <button className="btn btn-outline btn-circle btn-sm">
+                  <Share2 className="w-4 h-4" />
                 </button>
               </div>
 
-              <button 
-                onClick={toggleWishlist}
-                className={`btn btn-circle btn-sm ${isWishlisted ? "btn-secondary" : "btn-outline"}`}
-                title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-              >
-                <Heart className={`w-4 h-4 ${isWishlisted ? "fill-white text-white" : "text-rose-500"}`} />
-              </button>
-              <button className="btn btn-outline btn-circle btn-sm">
-                <Share2 className="w-4 h-4" />
-              </button>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button 
+                  onClick={() => handleAddToCart(true)} 
+                  className="btn btn-primary btn-md rounded-xl gap-2 font-bold shadow-md shadow-primary/20"
+                >
+                  <ShoppingCart className="w-5 h-5" /> Add to Cart
+                </button>
+                <button 
+                  onClick={handleBuyNow} 
+                  className="btn btn-secondary btn-md rounded-xl font-bold shadow-md shadow-secondary/20"
+                >
+                  Buy Now
+                </button>
+              </div>
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Link href="/cart" className="btn btn-primary btn-md rounded-xl gap-2 font-bold">
-                <ShoppingCart className="w-5 h-5" /> Add to Cart
-              </Link>
-              <Link href="/checkout" className="btn btn-secondary btn-md rounded-xl font-bold">
-                Buy Now
-              </Link>
-            </div>
-          </div>
 
           {/* Assurance Guarantees */}
           <div className="grid grid-cols-3 gap-2 pt-4 border-t border-base-200 text-center text-xs text-base-content/70">

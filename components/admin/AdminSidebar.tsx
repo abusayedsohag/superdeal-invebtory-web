@@ -36,6 +36,8 @@ function SidebarLinks() {
     suppliers: number;
     expenses: number;
     coupons: number;
+    orders: number;
+    newOrders: number;
     lowStock: number;
     outOfStock: number;
     inventoryAlerts: number;
@@ -46,6 +48,8 @@ function SidebarLinks() {
     suppliers: 0,
     expenses: 0,
     coupons: 0,
+    orders: 0,
+    newOrders: 0,
     lowStock: 0,
     outOfStock: 0,
     inventoryAlerts: 0,
@@ -106,7 +110,13 @@ function SidebarLinks() {
       badge: counts.suppliers > 0 ? String(counts.suppliers) : "0",
       badgeColor: "badge-neutral font-bold text-slate-300"
     },
-    { label: "Orders", href: "/admin/orders", icon: ShoppingCart, badge: "12 New", badgeColor: "badge-primary" },
+    { 
+      label: "Orders", 
+      href: "/admin/orders", 
+      icon: ShoppingCart, 
+      badge: counts.newOrders > 0 ? `${counts.newOrders} New` : counts.orders > 0 ? String(counts.orders) : "0", 
+      badgeColor: counts.newOrders > 0 ? "badge-primary text-white font-bold" : "badge-ghost text-slate-300 font-bold" 
+    },
     { label: "Returns & Refunds", href: "/admin/returns", icon: RotateCcw, badge: "1 Pending", badgeColor: "badge-warning" },
     { label: "Delivery & Courier", href: "/admin/delivery", icon: Truck },
     { label: "Customers", href: "/admin/customers", icon: Users },

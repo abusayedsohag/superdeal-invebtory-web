@@ -10,15 +10,18 @@ export async function GET() {
     const suppliersCollection = db.collection("suppliers");
     const expensesCollection = db.collection("expenses");
     const couponsCollection = db.collection("coupons");
+    const ordersCollection = db.collection("orders");
 
     // Run parallel counts
-    const [totalProducts, totalCategories, totalWarehouses, totalSuppliers, totalExpenses, totalCoupons, lowStockCount, outOfStockCount] = await Promise.all([
+    const [totalProducts, totalCategories, totalWarehouses, totalSuppliers, totalExpenses, totalCoupons, totalOrders, newOrders, lowStockCount, outOfStockCount] = await Promise.all([
       productsCollection.countDocuments({}),
       categoriesCollection.countDocuments({ status: { $ne: "Inactive" } }),
       warehousesCollection.countDocuments({ status: { $ne: "Inactive" } }),
       suppliersCollection.countDocuments({ status: { $ne: "Inactive" } }),
       expensesCollection.countDocuments({}),
       couponsCollection.countDocuments({ status: "Active" }),
+      ordersCollection.countDocuments({}),
+      ordersCollection.countDocuments({ orderStatus: { $in: ["Pending", "Confirmed"] } }),
       productsCollection.countDocuments({
         $and: [
           { stock: { $gt: 0 } },
@@ -49,6 +52,8 @@ export async function GET() {
         suppliers: totalSuppliers || 3,
         expenses: totalExpenses,
         coupons: totalCoupons,
+        orders: totalOrders,
+        newOrders: newOrders,
         lowStock: lowStockCount,
         outOfStock: outOfStockCount,
         inventoryAlerts,
