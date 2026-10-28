@@ -366,8 +366,8 @@ function ProductDetailContent() {
           {/* Pricing */}
           <div className="p-4 bg-base-200/60 rounded-2xl flex items-center justify-between">
             <div>
-              <span className="text-3xl font-black text-primary">\${product.price}</span>
-              <span className="text-sm text-base-content/40 line-through ml-3">\${product.originalPrice}</span>
+              <span className="text-3xl font-black text-primary">৳{product.price.toLocaleString()}</span>
+              <span className="text-sm text-base-content/40 line-through ml-3">৳{product.originalPrice.toLocaleString()}</span>
             </div>
             <span className="text-xs font-bold text-success bg-success/10 px-3 py-1 rounded-full">
               You Save \${(product.originalPrice - product.price).toFixed(2)}

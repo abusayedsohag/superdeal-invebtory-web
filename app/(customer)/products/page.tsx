@@ -195,12 +195,12 @@ export default function ProductsPage() {
           <div className="space-y-2">
             <div className="flex justify-between items-center text-xs font-semibold uppercase text-base-content/60">
               <span>Max Price</span>
-              <span className="text-primary font-bold">\${priceRange}</span>
+              <span className="text-primary font-bold">৳{priceRange}</span>
             </div>
             <input
               type="range"
               min="10"
-              max="500"
+              max="5000"
               value={priceRange}
               onChange={(e) => setPriceRange(Number(e.target.value))}
               className="range range-xs range-primary"
@@ -277,8 +277,8 @@ export default function ProductsPage() {
                   </div>
                   <div className="flex items-center justify-between pt-2">
                     <div>
-                      <span className="text-lg font-black">\${product.price}</span>
-                      <span className="text-xs text-base-content/40 line-through ml-1.5">\${product.originalPrice}</span>
+                      <span className="text-lg font-black">৳{product.price.toLocaleString()}</span>
+                      <span className="text-xs text-base-content/40 line-through ml-1.5">৳{product.originalPrice.toLocaleString()}</span>
                     </div>
                     <Link href={`/products/${product.id}`} className="btn btn-primary btn-sm rounded-xl gap-1">
                       <ShoppingBag className="w-3.5 h-3.5" /> Details
