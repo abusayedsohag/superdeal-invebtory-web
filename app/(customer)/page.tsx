@@ -1,5 +1,6 @@
 import Link from "next/link";
 import HeroSlider from "@/components/customer/HeroSlider";
+import DynamicFlashSaleSection from "@/components/customer/DynamicFlashSaleSection";
 import { 
   ShoppingBag, 
   ArrowRight, 
@@ -433,59 +434,8 @@ export default function CustomerHomePage() {
         </div>
       </div>
 
-      {/* 2. FLASH SALE SECTION */}
-      <section className="max-w-7xl mx-auto px-4">
-        <div className="bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 text-white p-6 md:p-8 rounded-3xl shadow-xl space-y-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/20 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-white text-red-600 rounded-2xl animate-pulse"><Flame className="w-7 h-7 fill-current" /></div>
-              <div>
-                <h2 className="text-2xl md:text-3xl font-black">Flash Sale Hot Deals</h2>
-                <p className="text-xs text-white/80">Massive discount prices ending very soon!</p>
-              </div>
-            </div>
-            {/* Countdown timer UI */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider">Ends In:</span>
-              <div className="flex items-center gap-1.5 font-mono text-xs font-bold">
-                <span className="bg-white/20 backdrop-blur-md px-2.5 py-1.5 rounded-lg">04h</span>:
-                <span className="bg-white/20 backdrop-blur-md px-2.5 py-1.5 rounded-lg">28m</span>:
-                <span className="bg-white/20 backdrop-blur-md px-2.5 py-1.5 rounded-lg">15s</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {flashSaleProducts.map((p) => (
-              <div key={p.id} className="bg-base-100 text-base-content rounded-2xl p-4 space-y-3 shadow-md hover:scale-[1.02] transition-transform">
-                <div className="relative h-44 bg-base-200 rounded-xl overflow-hidden">
-                  <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
-                  <span className="badge badge-error text-white font-extrabold absolute top-2 left-2">{p.discount}</span>
-                </div>
-                <h3 className="font-bold text-sm line-clamp-1">{p.name}</h3>
-                <div className="flex items-center justify-between text-xs">
-                  <div>
-                    <span className="text-lg font-black text-error">\${p.price}</span>
-                    <span className="text-xs text-base-content/40 line-through ml-1.5">\${p.originalPrice}</span>
-                  </div>
-                  <span className="text-amber-500 font-bold flex items-center gap-1"><Star className="w-3.5 h-3.5 fill-current" /> {p.rating}</span>
-                </div>
-                {/* Stock progress bar */}
-                <div className="space-y-1">
-                  <div className="flex justify-between text-[10px] font-bold text-base-content/60">
-                    <span>Sold: {p.sold}</span>
-                    <span>Stock: {p.totalStock}</span>
-                  </div>
-                  <progress className="progress progress-error w-full h-2" value={p.sold} max={p.totalStock}></progress>
-                </div>
-                <Link href={`/products/${p.id}`} className="btn btn-error text-white btn-sm btn-block rounded-xl font-bold gap-1">
-                  <ShoppingBag className="w-4 h-4" /> Claim Deal
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* 2. DYNAMIC FLASH SALE SECTION */}
+      <DynamicFlashSaleSection />
 
       {/* 3. TODAY'S DEALS */}
       <section className="max-w-7xl mx-auto px-4">
