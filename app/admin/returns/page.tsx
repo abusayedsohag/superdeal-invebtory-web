@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { 
   RotateCcw, 
   Search, 
@@ -14,7 +14,9 @@ import {
   Boxes, 
   Check, 
   User,
-  ShieldAlert
+  ShieldAlert,
+  Clock,
+  ArrowUpRight
 } from "lucide-react";
 
 interface ReturnRequest {
@@ -23,6 +25,7 @@ interface ReturnRequest {
   customerName: string;
   customerPhone: string;
   customerAddress: string;
+  productId?: string;
   productName: string;
   itemQty: number;
   orderTotal: number;
@@ -35,135 +38,131 @@ interface ReturnRequest {
 }
 
 export default function AdminReturnsPage() {
-  const [returnRequests, setReturnRequests] = useState<ReturnRequest[]>([
-    {
-      id: "RET-901",
-      orderId: "SD10293",
-      customerName: "Rahim Ahmed",
-      customerPhone: "+880 1711-223344",
-      customerAddress: "House 42, Road 11, Block D, Banani, Dhaka",
-      productName: "Wireless Gaming Headphones",
-      itemQty: 1,
-      orderTotal: 2450,
-      reason: "Product damaged",
-      requestType: "Return",
-      status: "Pending",
-      warehouseLocation: "Dhaka Warehouse",
-      requestDate: "09 Oct 2026"
-    },
-    {
-      id: "RET-902",
-      orderId: "SD10288",
-      customerName: "Tanvir Hossain",
-      customerPhone: "+880 1819-223344",
-      customerAddress: "Agrabad Commercial Area, Chittagong",
-      productName: "Ultra Smart Watch Series 7",
-      itemQty: 1,
-      orderTotal: 1490,
-      reason: "Wrong size/color received",
-      requestType: "Replacement",
-      status: "Approved",
-      warehouseLocation: "Chittagong Warehouse",
-      requestDate: "07 Oct 2026"
-    },
-    {
-      id: "RET-903",
-      orderId: "SD10250",
-      customerName: "Sharmin Sultana",
-      customerPhone: "+880 1733-445566",
-      customerAddress: "Zindabazar, Sylhet",
-      productName: "Mechanical Gaming Keyboard",
-      itemQty: 1,
-      orderTotal: 1600,
-      reason: "Faulty USB connection",
-      requestType: "Refund",
-      status: "Full Refund",
-      refundedAmount: 1600,
-      warehouseLocation: "Dhaka Warehouse",
-      requestDate: "04 Oct 2026"
-    }
-  ]);
-
+  const [returnRequests, setReturnRequests] = useState<ReturnRequest[]>([]);
+  const [stats, setStats] = useState({
+    total: 0,
+    pending: 0,
+    approved: 0,
+    refunded: 0,
+    rejected: 0,
+  });
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [selectedRequest, setSelectedRequest] = useState<ReturnRequest | null>(null);
   const [partialAmount, setPartialAmount] = useState<number>(1000);
   const [isPartialModalOpen, setIsPartialModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 5000);
   };
 
-  // Helper to trigger automated inventory restock
-  const triggerInventoryAutoUpdate = (req: ReturnRequest, actionName: string) => {
-    showToast(
-      `📦 Inventory Automatically Updated! Restocked +${req.itemQty} unit(s) of "${req.productName}" into ${req.warehouseLocation} for Order #${req.orderId}. (${actionName})`
-    );
+  // Fetch from MongoDB
+  const fetchReturns = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/returns?status=${filterStatus}&search=${encodeURIComponent(searchQuery)}`);
+      const data = await res.json();
+      if (data.success) {
+        setReturnRequests(data.returns || []);
+        if (data.stats) {
+          setStats(data.stats);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch returns:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReturns();
+  }, [filterStatus]);
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchReturns();
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // API Patch helper
+  const updateReturnStatus = async (
+    id: string, 
+    newStatus: ReturnRequest["status"], 
+    options?: { refundedAmount?: number; restock?: boolean }
+  ) => {
+    setActionLoading(true);
+    try {
+      const res = await fetch("/api/returns", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id,
+          status: newStatus,
+          refundedAmount: options?.refundedAmount,
+          restockInventory: options?.restock ?? true,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        const restockNote = data.restocked ? " (Inventory stock auto-replenished)" : "";
+        showToast(`✅ Status updated to "${newStatus}"${restockNote}`);
+        await fetchReturns();
+        if (selectedRequest && selectedRequest.id === id) {
+          setSelectedRequest((prev) => 
+            prev ? { ...prev, status: newStatus, refundedAmount: options?.refundedAmount ?? prev.refundedAmount } : null
+          );
+        }
+      } else {
+        alert(data.message || "Failed to update return request");
+      }
+    } catch (err) {
+      console.error("Error updating return:", err);
+      alert("Error processing action");
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   // 1. APPROVE ACTION
   const handleApprove = (req: ReturnRequest) => {
-    setReturnRequests(prev => prev.map(r => r.id === req.id ? { ...r, status: "Approved" } : r));
-    triggerInventoryAutoUpdate(req, "Approved Return");
-    if (selectedRequest) setSelectedRequest({ ...selectedRequest, status: "Approved" });
+    updateReturnStatus(req.id, "Approved", { restock: true });
   };
 
   // 2. REJECT ACTION
   const handleReject = (req: ReturnRequest) => {
-    setReturnRequests(prev => prev.map(r => r.id === req.id ? { ...r, status: "Rejected" } : r));
-    showToast(`❌ Return request #${req.id} for Order #${req.orderId} rejected.`);
-    if (selectedRequest) setSelectedRequest({ ...selectedRequest, status: "Rejected" });
+    updateReturnStatus(req.id, "Rejected", { restock: false });
   };
 
   // 3. PARTIAL REFUND ACTION
   const handleConfirmPartialRefund = () => {
     if (!selectedRequest || partialAmount <= 0) return;
-
-    setReturnRequests(prev => prev.map(r => {
-      if (r.id === selectedRequest.id) {
-        return { 
-          ...r, 
-          status: "Partial Refund", 
-          refundedAmount: partialAmount 
-        };
-      }
-      return r;
-    }));
-
-    triggerInventoryAutoUpdate(selectedRequest, `Partial Refund ৳${partialAmount}`);
+    updateReturnStatus(selectedRequest.id, "Partial Refund", { 
+      refundedAmount: partialAmount, 
+      restock: true 
+    });
     setIsPartialModalOpen(false);
-    setSelectedRequest(prev => prev ? { ...prev, status: "Partial Refund", refundedAmount: partialAmount } : null);
   };
 
   // 4. FULL REFUND ACTION
   const handleFullRefund = (req: ReturnRequest) => {
-    setReturnRequests(prev => prev.map(r => r.id === req.id ? { ...r, status: "Full Refund", refundedAmount: req.orderTotal } : r));
-    triggerInventoryAutoUpdate(req, `Full Refund ৳${req.orderTotal}`);
-    if (selectedRequest) setSelectedRequest({ ...selectedRequest, status: "Full Refund", refundedAmount: req.orderTotal });
+    updateReturnStatus(req.id, "Full Refund", { 
+      refundedAmount: req.orderTotal, 
+      restock: true 
+    });
   };
 
   // 5. REPLACEMENT ACTION
   const handleReplacement = (req: ReturnRequest) => {
-    setReturnRequests(prev => prev.map(r => r.id === req.id ? { ...r, status: "Replacement Sent" } : r));
-    triggerInventoryAutoUpdate(req, "Replacement Order Dispatched");
-    if (selectedRequest) setSelectedRequest({ ...selectedRequest, status: "Replacement Sent" });
+    updateReturnStatus(req.id, "Replacement Sent", { restock: false });
   };
-
-  // Filter
-  const filteredRequests = returnRequests.filter(r => {
-    const matchesSearch = 
-      r.orderId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.reason.toLowerCase().includes(searchQuery.toLowerCase());
-
-    if (filterStatus === "pending") return matchesSearch && r.status === "Pending";
-    if (filterStatus === "approved") return matchesSearch && r.status === "Approved";
-    if (filterStatus === "refunded") return matchesSearch && (r.status === "Full Refund" || r.status === "Partial Refund");
-    return matchesSearch;
-  });
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-16">
@@ -185,8 +184,58 @@ export default function AdminReturnsPage() {
             <RotateCcw className="w-8 h-8 text-primary" /> Returns & Refunds Management
           </h1>
           <p className="text-xs text-slate-500">
-            Process customer return claims, approve partial/full refunds or replacements. Inventory automatically updates upon action.
+            Process customer return claims, approve partial/full refunds or replacements. Inventory automatically updates upon resolution.
           </p>
+        </div>
+        <button
+          onClick={fetchReturns}
+          disabled={loading}
+          className="btn btn-outline btn-sm gap-2 font-bold rounded-xl"
+        >
+          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} /> Refresh
+        </button>
+      </div>
+
+      {/* STATS OVERVIEW */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold">
+            <RotateCcw className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-[11px] font-bold text-slate-400 uppercase">Total Claims</p>
+            <h3 className="text-xl font-black text-slate-900">{stats.total}</h3>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-amber-200 bg-amber-50/20 shadow-xs flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600 font-bold">
+            <Clock className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-[11px] font-bold text-amber-700 uppercase">Pending Review</p>
+            <h3 className="text-xl font-black text-amber-700">{stats.pending}</h3>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-emerald-200 bg-emerald-50/20 shadow-xs flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 font-bold">
+            <DollarSign className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-[11px] font-bold text-emerald-700 uppercase">Refunded</p>
+            <h3 className="text-xl font-black text-emerald-700">{stats.refunded}</h3>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 font-bold">
+            <CheckCircle2 className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-[11px] font-bold text-slate-400 uppercase">Approved</p>
+            <h3 className="text-xl font-black text-slate-900">{stats.approved}</h3>
+          </div>
         </div>
       </div>
 
@@ -196,7 +245,7 @@ export default function AdminReturnsPage() {
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search Order #SD10293, customer, or reason..."
+            placeholder="Search Order ID, customer, product or reason..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="input input-sm input-bordered w-full pl-9 text-xs focus:outline-none rounded-xl"
@@ -210,10 +259,10 @@ export default function AdminReturnsPage() {
             onChange={(e) => setFilterStatus(e.target.value)}
             className="select select-sm select-bordered text-xs focus:outline-none rounded-xl font-bold"
           >
-            <option value="all">All Request Statuses</option>
-            <option value="pending">Pending Only</option>
-            <option value="approved">Approved Only</option>
-            <option value="refunded">Refunded (Partial & Full)</option>
+            <option value="all">All Request Statuses ({stats.total})</option>
+            <option value="pending">Pending Only ({stats.pending})</option>
+            <option value="approved">Approved Only ({stats.approved})</option>
+            <option value="refunded">Refunded (Partial & Full) ({stats.refunded})</option>
           </select>
         </div>
       </div>
@@ -233,63 +282,80 @@ export default function AdminReturnsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {filteredRequests.map((req) => (
-              <tr key={req.id} className="hover:bg-slate-50/50">
-                <td className="font-mono font-extrabold text-primary text-base">
-                  #{req.orderId}
-                </td>
-
-                <td>
-                  <p className="font-bold text-slate-900 text-xs">{req.customerName}</p>
-                  <p className="text-[11px] text-slate-400">{req.customerPhone}</p>
-                </td>
-
-                <td>
-                  <div className="space-y-0.5">
-                    <span className="font-bold text-red-600 text-xs">"{req.reason}"</span>
-                    <p className="text-[11px] text-slate-500">{req.productName} (x{req.itemQty})</p>
-                  </div>
-                </td>
-
-                <td>
-                  <span className="badge badge-sm badge-outline font-bold text-slate-800">
-                    {req.requestType}
-                  </span>
-                </td>
-
-                <td className="text-right font-mono font-black text-slate-900 text-base">
-                  ৳{req.orderTotal.toLocaleString()}
-                  {req.refundedAmount && (
-                    <span className="block text-[10px] text-emerald-600 font-bold">
-                      Refunded: ৳{req.refundedAmount.toLocaleString()}
-                    </span>
-                  )}
-                </td>
-
-                <td>
-                  <span className={`badge ${
-                    req.status === "Pending" ? "badge-warning text-slate-950 font-black" :
-                    req.status === "Approved" ? "badge-info text-white font-bold" :
-                    req.status === "Rejected" ? "badge-error text-white font-bold" : "badge-success text-white font-black"
-                  } text-xs px-2.5 py-1`}>
-                    {req.status}
-                  </span>
-                </td>
-
-                {/* 5 EXACT SPECIFIED ADMIN ACTIONS */}
-                <td className="text-center">
-                  <div className="flex flex-wrap items-center justify-center gap-1">
-                    <button
-                      onClick={() => setSelectedRequest(req)}
-                      className="btn btn-xs btn-primary gap-1 font-bold rounded-lg"
-                      title="View Claim Details & Full Actions"
-                    >
-                      <Eye className="w-3.5 h-3.5" /> Process Request
-                    </button>
-                  </div>
+            {loading ? (
+              <tr>
+                <td colSpan={7} className="text-center py-12 text-slate-400">
+                  <span className="loading loading-spinner loading-md text-primary"></span>
+                  <p className="text-xs mt-2 font-medium">Loading returns from MongoDB...</p>
                 </td>
               </tr>
-            ))}
+            ) : returnRequests.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="text-center py-12 text-slate-400">
+                  <RotateCcw className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+                  <p className="text-sm font-bold text-slate-600">No return requests found</p>
+                  <p className="text-xs text-slate-400">All customer return claims are processed</p>
+                </td>
+              </tr>
+            ) : (
+              returnRequests.map((req) => (
+                <tr key={req.id} className="hover:bg-slate-50/50">
+                  <td className="font-mono font-extrabold text-primary text-base">
+                    #{req.orderId}
+                  </td>
+
+                  <td>
+                    <p className="font-bold text-slate-900 text-xs">{req.customerName}</p>
+                    <p className="text-[11px] text-slate-400">{req.customerPhone}</p>
+                  </td>
+
+                  <td>
+                    <div className="space-y-0.5">
+                      <span className="font-bold text-rose-600 text-xs">"{req.reason}"</span>
+                      <p className="text-[11px] text-slate-500">{req.productName} (x{req.itemQty})</p>
+                    </div>
+                  </td>
+
+                  <td>
+                    <span className="badge badge-sm badge-outline font-bold text-slate-800">
+                      {req.requestType}
+                    </span>
+                  </td>
+
+                  <td className="text-right font-mono font-black text-slate-900 text-base">
+                    ৳{req.orderTotal.toLocaleString()}
+                    {req.refundedAmount && (
+                      <span className="block text-[10px] text-emerald-600 font-bold">
+                        Refunded: ৳{req.refundedAmount.toLocaleString()}
+                      </span>
+                    )}
+                  </td>
+
+                  <td>
+                    <span className={`badge ${
+                      req.status === "Pending" ? "badge-warning text-slate-950 font-black" :
+                      req.status === "Approved" ? "badge-info text-white font-bold" :
+                      req.status === "Rejected" ? "badge-error text-white font-bold" : "badge-success text-white font-black"
+                    } text-xs px-2.5 py-1`}>
+                      {req.status}
+                    </span>
+                  </td>
+
+                  {/* 5 EXACT SPECIFIED ADMIN ACTIONS */}
+                  <td className="text-center">
+                    <div className="flex flex-wrap items-center justify-center gap-1">
+                      <button
+                        onClick={() => setSelectedRequest(req)}
+                        className="btn btn-xs btn-primary gap-1 font-bold rounded-lg shadow-xs"
+                        title="View Claim Details & Full Actions"
+                      >
+                        <Eye className="w-3.5 h-3.5" /> Process Request
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -310,14 +376,25 @@ export default function AdminReturnsPage() {
               </button>
             </div>
 
-            {/* Customer Request Details matching specifications */}
-            <div className="p-4 bg-red-50/70 rounded-2xl border border-red-200 space-y-2 text-xs text-red-950">
+            {/* Customer Request Details */}
+            <div className="p-4 bg-rose-50/70 rounded-2xl border border-rose-200 space-y-2 text-xs text-rose-950">
               <div className="flex justify-between font-bold text-sm">
                 <span>Reason: "{selectedRequest.reason}"</span>
-                <span className="badge badge-warning text-slate-950 font-black">Status: {selectedRequest.status}</span>
+                <span className={`badge ${
+                  selectedRequest.status === "Pending" ? "badge-warning text-slate-950 font-black" :
+                  selectedRequest.status === "Approved" ? "badge-info text-white font-bold" :
+                  selectedRequest.status === "Rejected" ? "badge-error text-white font-bold" : "badge-success text-white font-black"
+                }`}>
+                  Status: {selectedRequest.status}
+                </span>
               </div>
               <p>Product Item: <strong>{selectedRequest.productName}</strong> (Qty: {selectedRequest.itemQty})</p>
               <p>Total Order Value: <strong className="font-mono text-base text-slate-900">৳{selectedRequest.orderTotal.toLocaleString()}</strong></p>
+              {selectedRequest.refundedAmount && (
+                <p className="text-emerald-700 font-bold">
+                  Amount Refunded: <strong className="font-mono text-base">৳{selectedRequest.refundedAmount.toLocaleString()}</strong>
+                </p>
+              )}
               <p>Inventory Return Destination: <strong>{selectedRequest.warehouseLocation}</strong></p>
             </div>
 
@@ -334,12 +411,13 @@ export default function AdminReturnsPage() {
             {/* 5 EXACT ADMIN RESOLUTION ACTIONS */}
             <div className="space-y-3 p-4 bg-indigo-50/70 rounded-2xl border border-indigo-200">
               <h4 className="font-black text-indigo-950 text-sm flex items-center gap-1.5">
-                <ShieldAlert className="w-4 h-4 text-primary" /> Admin Resolution Options (Triggers Auto Inventory Update)
+                <ShieldAlert className="w-4 h-4 text-primary" /> Admin Resolution Options (Triggers Auto Inventory Restock)
               </h4>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {/* 1. Approve */}
                 <button
+                  disabled={actionLoading}
                   onClick={() => handleApprove(selectedRequest)}
                   className="btn btn-sm btn-info text-white font-bold rounded-xl gap-1 justify-start"
                 >
@@ -348,6 +426,7 @@ export default function AdminReturnsPage() {
 
                 {/* 2. Reject */}
                 <button
+                  disabled={actionLoading}
                   onClick={() => handleReject(selectedRequest)}
                   className="btn btn-sm btn-error text-white font-bold rounded-xl gap-1 justify-start"
                 >
@@ -356,6 +435,7 @@ export default function AdminReturnsPage() {
 
                 {/* 3. Partial Refund */}
                 <button
+                  disabled={actionLoading}
                   onClick={() => {
                     setPartialAmount(Math.round(selectedRequest.orderTotal / 2));
                     setIsPartialModalOpen(true);
@@ -367,6 +447,7 @@ export default function AdminReturnsPage() {
 
                 {/* 4. Full Refund */}
                 <button
+                  disabled={actionLoading}
                   onClick={() => handleFullRefund(selectedRequest)}
                   className="btn btn-sm btn-success text-white font-bold rounded-xl gap-1 justify-start"
                 >
@@ -375,6 +456,7 @@ export default function AdminReturnsPage() {
 
                 {/* 5. Replacement */}
                 <button
+                  disabled={actionLoading}
                   onClick={() => handleReplacement(selectedRequest)}
                   className="btn btn-sm bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl gap-1 justify-start sm:col-span-2"
                 >
@@ -433,6 +515,7 @@ export default function AdminReturnsPage() {
                 Cancel
               </button>
               <button 
+                disabled={actionLoading}
                 onClick={handleConfirmPartialRefund}
                 className="btn btn-sm btn-success text-white font-bold rounded-xl gap-1"
               >

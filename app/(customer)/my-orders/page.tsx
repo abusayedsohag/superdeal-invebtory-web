@@ -18,6 +18,9 @@ import {
   MapPin,
   Phone,
   ShieldCheck,
+  RotateCcw,
+  Send,
+  AlertTriangle,
   X
 } from "lucide-react";
 
@@ -72,6 +75,13 @@ export default function MyOrdersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [trackingModalOrder, setTrackingModalOrder] = useState<CustomerOrder | null>(null);
 
+  // Return request state
+  const [returnModalOrder, setReturnModalOrder] = useState<CustomerOrder | null>(null);
+  const [returnReason, setReturnReason] = useState("");
+  const [returnType, setReturnType] = useState<"Return" | "Refund" | "Replacement">("Return");
+  const [isSubmittingReturn, setIsSubmittingReturn] = useState(false);
+  const [returnSuccessMsg, setReturnSuccessMsg] = useState<string | null>(null);
+
   // Fetch orders from MongoDB
   const fetchCustomerOrders = async (showLoading = true) => {
     if (showLoading) setIsLoading(true);
@@ -94,6 +104,50 @@ export default function MyOrdersPage() {
   useEffect(() => {
     fetchCustomerOrders();
   }, []);
+
+  const handleReturnSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!returnModalOrder || !returnReason.trim()) return;
+
+    setIsSubmittingReturn(true);
+    try {
+      const firstItem = returnModalOrder.items[0];
+      const res = await fetch("/api/returns", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId: returnModalOrder.id,
+          customerName: returnModalOrder.customer,
+          customerPhone: returnModalOrder.phone,
+          customerAddress: `${returnModalOrder.address || ""}, ${returnModalOrder.district}`,
+          productId: firstItem?.id || "",
+          productName: returnModalOrder.items.map((i) => i.name).join(", "),
+          itemQty: returnModalOrder.items.reduce((acc, i) => acc + (i.qty || 1), 0),
+          orderTotal: returnModalOrder.total,
+          reason: returnReason.trim(),
+          requestType: returnType,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setReturnSuccessMsg(`Return claim #${data.returnRequest?.id || ""} submitted successfully!`);
+        setTimeout(() => {
+          setReturnSuccessMsg(null);
+          setReturnModalOrder(null);
+          setReturnReason("");
+        }, 3000);
+        fetchCustomerOrders(false);
+      } else {
+        alert(data.message || "Failed to submit return request");
+      }
+    } catch (err) {
+      console.error("Error submitting return:", err);
+      alert("Something went wrong while submitting your request.");
+    } finally {
+      setIsSubmittingReturn(false);
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -299,6 +353,17 @@ export default function MyOrdersPage() {
                   </div>
 
                   <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setReturnModalOrder(order);
+                        setReturnReason("");
+                        setReturnSuccessMsg(null);
+                      }}
+                      className="btn btn-xs btn-ghost gap-1 rounded-lg font-bold text-rose-500 hover:bg-rose-50"
+                      title="Request return or refund"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" /> Return / Refund
+                    </button>
                     <a
                       href={`/admin/orders/invoice/${order.id}`}
                       target="_blank"
@@ -386,6 +451,112 @@ export default function MyOrdersPage() {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* CUSTOMER RETURN / REFUND REQUEST MODAL */}
+      {returnModalOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+          <div className="bg-base-100 rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-2xl border border-base-200">
+            <div className="flex items-center justify-between border-b border-base-200 pb-3">
+              <div>
+                <h3 className="font-black text-xl flex items-center gap-2 text-base-content">
+                  <RotateCcw className="w-5 h-5 text-rose-500" /> Request Return or Refund
+                </h3>
+                <p className="text-xs text-base-content/60">
+                  Submit a claim for Order #{returnModalOrder.id}
+                </p>
+              </div>
+              <button
+                onClick={() => setReturnModalOrder(null)}
+                className="btn btn-ghost btn-circle btn-xs"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {returnSuccessMsg ? (
+              <div className="p-4 bg-success/10 border border-success/20 rounded-2xl text-center space-y-2">
+                <CheckCircle className="w-8 h-8 text-success mx-auto" />
+                <h4 className="font-bold text-sm text-success">{returnSuccessMsg}</h4>
+                <p className="text-xs text-base-content/70">
+                  Our customer support team is reviewing your claim. You will be updated shortly!
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleReturnSubmit} className="space-y-4 text-xs">
+                <div className="p-3 bg-base-200/50 rounded-2xl border border-base-200 space-y-1">
+                  <p className="text-base-content/70">
+                    Order Value: <strong className="font-mono text-sm text-base-content">৳{returnModalOrder.total.toLocaleString()}</strong>
+                  </p>
+                  <p className="text-base-content/70 truncate">
+                    Items: <strong>{returnModalOrder.items.map((i) => i.name).join(", ")}</strong>
+                  </p>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-base-content">Claim Type *</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(["Return", "Refund", "Replacement"] as const).map((type) => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setReturnType(type)}
+                        className={`btn btn-sm rounded-xl font-bold ${
+                          returnType === type 
+                            ? "btn-primary text-primary-content" 
+                            : "btn-outline text-base-content"
+                        }`}
+                      >
+                        {type}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-base-content">Reason for Return / Refund *</label>
+                  <textarea
+                    required
+                    rows={3}
+                    placeholder="e.g. Received damaged product, missing items, or wrong size/color..."
+                    value={returnReason}
+                    onChange={(e) => setReturnReason(e.target.value)}
+                    className="textarea textarea-bordered w-full rounded-xl text-xs"
+                  ></textarea>
+                </div>
+
+                <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-start gap-2 text-amber-700 dark:text-amber-400">
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <p className="text-[11px] leading-tight">
+                    Please ensure the item is in its original packaging with tags intact. Upon admin approval, our courier will contact you for pickup.
+                  </p>
+                </div>
+
+                <div className="pt-2 border-t border-base-200 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setReturnModalOrder(null)}
+                    className="btn btn-sm btn-ghost font-bold"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingReturn}
+                    className="btn btn-sm btn-primary rounded-xl font-bold gap-1 shadow-md shadow-primary/20"
+                  >
+                    {isSubmittingReturn ? (
+                      <span className="loading loading-spinner loading-xs"></span>
+                    ) : (
+                      <Send className="w-3.5 h-3.5" />
+                    )}
+                    Submit Claim
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}
