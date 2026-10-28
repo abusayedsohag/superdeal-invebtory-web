@@ -94,7 +94,7 @@ function SidebarLinks() {
       badge: counts.inventoryAlerts > 0 ? `Alert: ${counts.inventoryAlerts}` : "All Good", 
       badgeColor: counts.inventoryAlerts > 0 ? "badge-error text-white" : "badge-success text-white" 
     },
-    { label: "Barcode & POS", href: "/admin/barcode", icon: Barcode, badge: "POS", badgeColor: "badge-accent text-slate-950 font-black" },
+    { label: "Barcode Entry", href: "/admin/barcode", icon: Barcode, badge: "Barcode", badgeColor: "badge-accent text-slate-950 font-black" },
     { 
       label: "Warehouses", 
       href: "/admin/warehouses", 
