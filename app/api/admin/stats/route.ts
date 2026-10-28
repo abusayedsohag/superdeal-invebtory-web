@@ -11,9 +11,10 @@ export async function GET() {
     const expensesCollection = db.collection("expenses");
     const couponsCollection = db.collection("coupons");
     const ordersCollection = db.collection("orders");
+    const reviewsCollection = db.collection("reviews");
 
     // Run parallel counts
-    const [totalProducts, totalCategories, totalWarehouses, totalSuppliers, totalExpenses, totalCoupons, totalOrders, newOrders, lowStockCount, outOfStockCount] = await Promise.all([
+    const [totalProducts, totalCategories, totalWarehouses, totalSuppliers, totalExpenses, totalCoupons, totalOrders, newOrders, lowStockCount, outOfStockCount, pendingReviews] = await Promise.all([
       productsCollection.countDocuments({}),
       categoriesCollection.countDocuments({ status: { $ne: "Inactive" } }),
       warehousesCollection.countDocuments({ status: { $ne: "Inactive" } }),
@@ -38,6 +39,7 @@ export async function GET() {
       productsCollection.countDocuments({
         $or: [{ stock: { $lte: 0 } }, { stock: { $exists: false } }],
       }),
+      reviewsCollection.countDocuments({ status: "Pending" }),
     ]);
 
     // Inventory alert count: combined low stock + out of stock
@@ -54,6 +56,7 @@ export async function GET() {
         coupons: totalCoupons,
         orders: totalOrders,
         newOrders: newOrders,
+        pendingReviews: pendingReviews,
         lowStock: lowStockCount,
         outOfStock: outOfStockCount,
         inventoryAlerts,

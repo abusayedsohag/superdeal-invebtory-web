@@ -38,6 +38,7 @@ function SidebarLinks() {
     coupons: number;
     orders: number;
     newOrders: number;
+    pendingReviews: number;
     lowStock: number;
     outOfStock: number;
     inventoryAlerts: number;
@@ -50,6 +51,7 @@ function SidebarLinks() {
     coupons: 0,
     orders: 0,
     newOrders: 0,
+    pendingReviews: 0,
     lowStock: 0,
     outOfStock: 0,
     inventoryAlerts: 0,
@@ -135,7 +137,13 @@ function SidebarLinks() {
       badgeColor: "badge-accent font-bold text-slate-950"
     },
     { label: "Marketing", href: "/admin/marketing", icon: Megaphone },
-    { label: "Reviews", href: "/admin/reviews", icon: Star, badge: "1 Pending", badgeColor: "badge-warning" },
+    { 
+      label: "Reviews", 
+      href: "/admin/reviews", 
+      icon: Star, 
+      badge: counts.pendingReviews > 0 ? `${counts.pendingReviews} New` : "Reviews", 
+      badgeColor: counts.pendingReviews > 0 ? "badge-warning font-bold text-slate-950" : "badge-ghost text-slate-300 font-bold" 
+    },
     { label: "Reports", href: "/admin/reports", icon: BarChart3 },
     { label: "Users & Roles", href: "/admin/users-roles", icon: UserCheck },
     { label: "Settings", href: "/admin/settings", icon: Settings },
