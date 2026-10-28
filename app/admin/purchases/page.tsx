@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { 
   ShoppingBag, 
   Plus, 
@@ -12,10 +12,14 @@ import {
   PackagePlus, 
   Trash2, 
   X, 
-  DollarSign
+  DollarSign,
+  RefreshCw,
+  Building2,
+  Boxes
 } from "lucide-react";
 
 interface PurchaseItem {
+  id?: string;
   name: string;
   qty: number;
   cost: number;
@@ -35,52 +39,29 @@ interface PurchaseOrder {
 }
 
 export default function AdminPurchasesPage() {
-  const [purchases, setPurchases] = useState<PurchaseOrder[]>([
-    {
-      poNumber: "PO-1023",
-      supplier: "ABC Electronics",
-      warehouse: "Dhaka Warehouse",
-      date: "09 Oct 2026",
-      items: [
-        { name: "Wireless Mouse", qty: 100, cost: 400 },
-        { name: "Mechanical Keyboard", qty: 50, cost: 700 }
-      ],
-      subtotal: 75000,
-      shipping: 2000,
-      total: 77000,
-      status: "Ordered"
-    },
-    {
-      poNumber: "PO-1022",
-      supplier: "Global Tech Supplies Ltd",
-      warehouse: "Chittagong Warehouse",
-      date: "05 Oct 2026",
-      items: [
-        { name: "Ultra Smart Watch Series 7", qty: 40, cost: 1100 }
-      ],
-      subtotal: 44000,
-      shipping: 1500,
-      total: 45500,
-      status: "Received",
-      receivedAt: "07 Oct 2026"
-    },
-    {
-      poNumber: "PO-1021",
-      supplier: "Trend Apparel & Textile Mills",
-      warehouse: "Dhaka Warehouse",
-      date: "01 Oct 2026",
-      items: [
-        { name: "Cotton Men T-Shirt (Black/M)", qty: 200, cost: 250 },
-        { name: "Slim Fit Denim Jeans", qty: 100, cost: 650 }
-      ],
-      subtotal: 115000,
-      shipping: 3000,
-      total: 118000,
-      status: "Received",
-      receivedAt: "03 Oct 2026"
-    }
+  const [purchases, setPurchases] = useState<PurchaseOrder[]>([]);
+  const [suppliersList, setSuppliersList] = useState<string[]>([
+    "ABC Electronics",
+    "Apex Wholesale Electronics Ltd",
+    "Global Tech Supplies Ltd",
+    "Trend Apparel & Textile Mills",
   ]);
+  const [warehousesList, setWarehousesList] = useState<string[]>([
+    "Dhaka Central Warehouse",
+    "Chittagong Hub",
+    "Sylhet Warehouse",
+  ]);
+  const [availableProducts, setAvailableProducts] = useState<any[]>([]);
 
+  const [stats, setStats] = useState({
+    total: 0,
+    aggregateSpent: 0,
+    receivedCount: 0,
+    pendingCount: 0,
+  });
+
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [selectedPO, setSelectedPO] = useState<PurchaseOrder | null>(null);
@@ -89,12 +70,13 @@ export default function AdminPurchasesPage() {
 
   // New PO Form State
   const [newSupplier, setNewSupplier] = useState("ABC Electronics");
-  const [newWarehouse, setNewWarehouse] = useState("Dhaka Warehouse");
+  const [newWarehouse, setNewWarehouse] = useState("Dhaka Central Warehouse");
   const [newShipping, setNewShipping] = useState<number>(2000);
   const [newItems, setNewItems] = useState<PurchaseItem[]>([
-    { name: "Wireless Mouse", qty: 100, cost: 400 },
-    { name: "Mechanical Keyboard", qty: 50, cost: 700 }
+    { name: "Wireless Noise-Canceling Premium Headphones", qty: 50, cost: 400 },
+    { name: "Ergonomic Mechanical Keyboard RGB", qty: 30, cost: 700 }
   ]);
+  const [isSubmittingPO, setIsSubmittingPO] = useState(false);
 
   // Toast Notifier
   const showToast = (msg: string) => {
@@ -102,9 +84,59 @@ export default function AdminPurchasesPage() {
     setTimeout(() => setToastMessage(null), 5000);
   };
 
+  // Fetch Purchases from MongoDB
+  const fetchPurchases = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/purchases?status=${filterStatus}&search=${encodeURIComponent(searchQuery)}`);
+      const data = await res.json();
+      if (data.success) {
+        setPurchases(data.purchases || []);
+        if (data.suppliers && data.suppliers.length > 0) {
+          setSuppliersList(data.suppliers);
+          if (!newSupplier) setNewSupplier(data.suppliers[0]);
+        }
+        if (data.warehouses && data.warehouses.length > 0) {
+          setWarehousesList(data.warehouses);
+          if (!newWarehouse) setNewWarehouse(data.warehouses[0]);
+        }
+        if (data.products) {
+          setAvailableProducts(data.products);
+        }
+        if (data.stats) {
+          setStats(data.stats);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch purchases:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPurchases();
+  }, [filterStatus]);
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchPurchases();
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   // Add Item Row to New PO
   const handleAddItemRow = () => {
-    setNewItems(prev => [...prev, { name: "", qty: 10, cost: 100 }]);
+    const defaultProd = availableProducts[0];
+    setNewItems(prev => [
+      ...prev, 
+      { 
+        name: defaultProd ? defaultProd.name : "", 
+        qty: 10, 
+        cost: defaultProd ? defaultProd.costPrice : 100 
+      }
+    ]);
   };
 
   // Remove Item Row
@@ -117,65 +149,77 @@ export default function AdminPurchasesPage() {
   const calcFormSubtotal = newItems.reduce((acc, item) => acc + (item.qty * item.cost), 0);
   const calcFormTotal = calcFormSubtotal + (Number(newShipping) || 0);
 
-  // Create PO Handler
-  const handleCreatePO = (e: React.FormEvent) => {
+  // Create PO Handler (POST /api/purchases)
+  const handleCreatePO = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (newItems.some(i => !i.name.trim() || i.qty <= 0 || i.cost <= 0)) {
+      alert("Please ensure all product lines have valid names, quantities, and costs.");
+      return;
+    }
 
-    const createdPO: PurchaseOrder = {
-      poNumber: `PO-${1024 + purchases.length}`,
-      supplier: newSupplier,
-      warehouse: newWarehouse,
-      date: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
-      items: newItems,
-      subtotal: calcFormSubtotal,
-      shipping: Number(newShipping) || 0,
-      total: calcFormTotal,
-      status: "Ordered"
-    };
+    setIsSubmittingPO(true);
+    try {
+      const res = await fetch("/api/purchases", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          supplier: newSupplier,
+          warehouse: newWarehouse,
+          items: newItems,
+          shipping: Number(newShipping) || 0,
+        }),
+      });
 
-    setPurchases(prev => [createdPO, ...prev]);
-    setIsCreateModalOpen(false);
-    showToast(`✅ Purchase #${createdPO.poNumber} created successfully! Marked as 'Ordered'.`);
-  };
-
-  // Receive Purchase Handler (Automated Inventory Increment)
-  const handleReceivePurchase = (poNumber: string) => {
-    setPurchases(prev => prev.map(po => {
-      if (po.poNumber === poNumber) {
-        const totalItemsCount = po.items.reduce((sum, item) => sum + item.qty, 0);
-        showToast(`📦 Purchase #${po.poNumber} Received! Inventory automatically increased by +${totalItemsCount} units in ${po.warehouse}. Stock Updated.`);
-        
-        return {
-          ...po,
-          status: "Received",
-          receivedAt: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
-        };
+      const data = await res.json();
+      if (data.success) {
+        showToast(`✅ Purchase Order #${data.purchase?.poNumber} created successfully! Marked as 'Ordered'.`);
+        setIsCreateModalOpen(false);
+        fetchPurchases();
+      } else {
+        alert(data.message || "Failed to create purchase order");
       }
-      return po;
-    }));
-
-    if (selectedPO && selectedPO.poNumber === poNumber) {
-      setSelectedPO(prev => prev ? { ...prev, status: "Received" } : null);
+    } catch (err) {
+      console.error("Error creating PO:", err);
+      alert("Something went wrong creating purchase order");
+    } finally {
+      setIsSubmittingPO(false);
     }
   };
 
-  // Aggregates
-  const totalPurchasesCount = purchases.length;
-  const aggregateSpent = purchases.reduce((sum, p) => sum + p.total, 0);
-  const receivedCount = purchases.filter(p => p.status === "Received").length;
-  const pendingCount = purchases.filter(p => p.status === "Ordered" || p.status === "Processing").length;
+  // Receive Purchase Handler (PATCH /api/purchases -> Increments MongoDB inventory)
+  const handleReceivePurchase = async (poNumber: string) => {
+    setActionLoading(true);
+    try {
+      const res = await fetch("/api/purchases", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          poNumber,
+          status: "Received",
+        }),
+      });
 
-  // Filtered List
-  const filteredPurchases = purchases.filter(p => {
-    const matchesSearch = 
-      p.poNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.supplier.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.warehouse.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    if (filterStatus === "received") return matchesSearch && p.status === "Received";
-    if (filterStatus === "ordered") return matchesSearch && p.status === "Ordered";
-    return matchesSearch;
-  });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`📦 Purchase #${poNumber} Received! ${data.message}`);
+        await fetchPurchases();
+        if (selectedPO && selectedPO.poNumber === poNumber) {
+          setSelectedPO(prev => prev ? { 
+            ...prev, 
+            status: "Received", 
+            receivedAt: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) 
+          } : null);
+        }
+      } else {
+        alert(data.message || "Failed to receive purchase order");
+      }
+    } catch (err) {
+      console.error("Error receiving purchase:", err);
+      alert("Failed to receive purchase order");
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-16">
@@ -197,15 +241,24 @@ export default function AdminPurchasesPage() {
             <ShoppingBag className="w-8 h-8 text-primary" /> Purchase Management
           </h1>
           <p className="text-xs text-slate-500">
-            Procure inventory from suppliers. Receiving a purchase automatically updates inventory stock.
+            Procure inventory from suppliers. Receiving a purchase automatically increments stock in MongoDB.
           </p>
         </div>
-        <button 
-          onClick={() => setIsCreateModalOpen(true)}
-          className="btn btn-primary btn-sm gap-2 font-bold shadow-md rounded-xl"
-        >
-          <Plus className="w-4 h-4" /> Create Purchase Order
-        </button>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={fetchPurchases}
+            disabled={loading}
+            className="btn btn-outline btn-sm gap-2 font-bold rounded-xl"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} /> Refresh
+          </button>
+          <button 
+            onClick={() => setIsCreateModalOpen(true)}
+            className="btn btn-primary btn-sm gap-2 font-bold shadow-md shadow-primary/20 rounded-xl"
+          >
+            <Plus className="w-4 h-4" /> Create Purchase Order
+          </button>
+        </div>
       </div>
 
       {/* KPI STAT CARDS */}
@@ -213,7 +266,7 @@ export default function AdminPurchasesPage() {
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
             <p className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Total POs</p>
-            <h3 className="text-2xl font-black text-slate-900 mt-1">{totalPurchasesCount} Orders</h3>
+            <h3 className="text-2xl font-black text-slate-900 mt-1">{stats.total} Orders</h3>
             <p className="text-[11px] text-slate-500 mt-0.5">Procurement Records</p>
           </div>
           <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center">
@@ -223,11 +276,11 @@ export default function AdminPurchasesPage() {
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
-            <p className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Total Value</p>
+            <p className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Total Spend</p>
             <h3 className="text-2xl font-black text-slate-900 font-mono mt-1">
-              ৳{aggregateSpent.toLocaleString()}
+              ৳{stats.aggregateSpent.toLocaleString()}
             </h3>
-            <p className="text-[11px] text-slate-500 mt-0.5">Total Spent on Inventory</p>
+            <p className="text-[11px] text-slate-500 mt-0.5">Procured Inventory Value</p>
           </div>
           <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center">
             <DollarSign className="w-6 h-6" />
@@ -237,7 +290,7 @@ export default function AdminPurchasesPage() {
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
             <p className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Received & Stocked</p>
-            <h3 className="text-2xl font-black text-emerald-600 mt-1">{receivedCount} POs</h3>
+            <h3 className="text-2xl font-black text-emerald-600 mt-1">{stats.receivedCount} POs</h3>
             <p className="text-[11px] text-emerald-700 font-bold mt-0.5">Inventory Auto-Increased</p>
           </div>
           <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center">
@@ -248,8 +301,8 @@ export default function AdminPurchasesPage() {
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
             <p className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Pending Delivery</p>
-            <h3 className="text-2xl font-black text-amber-600 mt-1">{pendingCount} Orders</h3>
-            <p className="text-[11px] text-amber-700 font-bold mt-0.5">Awaiting Receiving</p>
+            <h3 className="text-2xl font-black text-amber-600 mt-1">{stats.pendingCount} Orders</h3>
+            <p className="text-[11px] text-amber-700 font-bold mt-0.5">Awaiting Warehouse Receiving</p>
           </div>
           <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center">
             <Clock className="w-6 h-6" />
@@ -276,9 +329,9 @@ export default function AdminPurchasesPage() {
             onChange={(e) => setFilterStatus(e.target.value)}
             className="select select-sm select-bordered text-xs focus:outline-none rounded-xl font-bold"
           >
-            <option value="all">All Purchase Statuses</option>
-            <option value="ordered">Ordered (Awaiting Receive)</option>
-            <option value="received">Received (Stock Increased)</option>
+            <option value="all">All Purchase Statuses ({stats.total})</option>
+            <option value="ordered">Ordered / Pending ({stats.pendingCount})</option>
+            <option value="received">Received / Stocked ({stats.receivedCount})</option>
           </select>
         </div>
       </div>
@@ -299,74 +352,92 @@ export default function AdminPurchasesPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {filteredPurchases.map((po) => {
-              const totalUnits = po.items.reduce((sum, item) => sum + item.qty, 0);
+            {loading ? (
+              <tr>
+                <td colSpan={8} className="text-center py-12 text-slate-400">
+                  <span className="loading loading-spinner loading-md text-primary"></span>
+                  <p className="text-xs mt-2 font-medium">Loading purchases from MongoDB...</p>
+                </td>
+              </tr>
+            ) : purchases.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="text-center py-12 text-slate-400">
+                  <Boxes className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+                  <p className="text-sm font-bold text-slate-600">No purchase orders found</p>
+                  <p className="text-xs text-slate-400">Click "Create Purchase Order" to replenish stock.</p>
+                </td>
+              </tr>
+            ) : (
+              purchases.map((po) => {
+                const totalUnits = po.items.reduce((sum, item) => sum + item.qty, 0);
 
-              return (
-                <tr key={po.poNumber} className="hover:bg-slate-50/50">
-                  <td className="font-extrabold text-primary font-mono text-base">
-                    #{po.poNumber}
-                  </td>
-                  <td>
-                    <p className="font-bold text-slate-900 text-sm">{po.supplier}</p>
-                  </td>
-                  <td>
-                    <p className="text-xs font-semibold text-slate-700 flex items-center gap-1">
-                      <Truck className="w-3.5 h-3.5 text-primary" /> {po.warehouse}
-                    </p>
-                  </td>
-                  <td className="text-xs text-slate-500 font-medium">{po.date}</td>
-                  <td>
-                    <div className="text-xs space-y-0.5">
-                      <span className="font-bold text-slate-900">{totalUnits} units total</span>
-                      <p className="text-[11px] text-slate-400">
-                        {po.items.map(i => `${i.name} (${i.qty})`).join(", ")}
+                return (
+                  <tr key={po.poNumber} className="hover:bg-slate-50/50">
+                    <td className="font-extrabold text-primary font-mono text-base">
+                      #{po.poNumber}
+                    </td>
+                    <td>
+                      <p className="font-bold text-slate-900 text-sm">{po.supplier}</p>
+                    </td>
+                    <td>
+                      <p className="text-xs font-semibold text-slate-700 flex items-center gap-1">
+                        <Truck className="w-3.5 h-3.5 text-primary" /> {po.warehouse}
                       </p>
-                    </div>
-                  </td>
-                  <td className="text-right font-mono font-black text-slate-900 text-base">
-                    ৳{po.total.toLocaleString()}
-                  </td>
-                  <td>
-                    {po.status === "Received" ? (
-                      <span className="badge badge-success text-white font-extrabold text-xs px-2.5 py-1 flex items-center gap-1 w-fit">
-                        <CheckCircle2 className="w-3 h-3" /> Received
-                      </span>
-                    ) : (
-                      <span className="badge badge-warning text-slate-900 font-extrabold text-xs px-2.5 py-1 flex items-center gap-1 w-fit">
-                        <Clock className="w-3 h-3" /> Ordered
-                      </span>
-                    )}
-                  </td>
-                  <td className="text-center">
-                    <div className="flex items-center justify-center gap-1.5">
-                      <button
-                        onClick={() => setSelectedPO(po)}
-                        className="btn btn-xs btn-outline gap-1 font-bold rounded-lg"
-                        title="View PO Details"
-                      >
-                        <Eye className="w-3.5 h-3.5" /> View
-                      </button>
-
-                      {po.status === "Ordered" && (
-                        <button
-                          onClick={() => handleReceivePurchase(po.poNumber)}
-                          className="btn btn-xs btn-success text-white gap-1 font-extrabold rounded-lg shadow-sm"
-                          title="Clicking will automatically increase product inventory"
-                        >
-                          <PackagePlus className="w-3.5 h-3.5" /> Receive Purchase
-                        </button>
+                    </td>
+                    <td className="text-xs text-slate-500 font-medium">{po.date}</td>
+                    <td>
+                      <div className="text-xs space-y-0.5">
+                        <span className="font-bold text-slate-900">{totalUnits} units total</span>
+                        <p className="text-[11px] text-slate-400">
+                          {po.items.map(i => `${i.name} (${i.qty})`).join(", ")}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="text-right font-mono font-black text-slate-900 text-base">
+                      ৳{po.total.toLocaleString()}
+                    </td>
+                    <td>
+                      {po.status === "Received" ? (
+                        <span className="badge badge-success text-white font-extrabold text-xs px-2.5 py-1 flex items-center gap-1 w-fit">
+                          <CheckCircle2 className="w-3 h-3" /> Received
+                        </span>
+                      ) : (
+                        <span className="badge badge-warning text-slate-900 font-extrabold text-xs px-2.5 py-1 flex items-center gap-1 w-fit">
+                          <Clock className="w-3 h-3" /> Ordered
+                        </span>
                       )}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
+                    </td>
+                    <td className="text-center">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <button
+                          onClick={() => setSelectedPO(po)}
+                          className="btn btn-xs btn-outline gap-1 font-bold rounded-lg"
+                          title="View PO Details"
+                        >
+                          <Eye className="w-3.5 h-3.5" /> View
+                        </button>
+
+                        {po.status === "Ordered" && (
+                          <button
+                            disabled={actionLoading}
+                            onClick={() => handleReceivePurchase(po.poNumber)}
+                            className="btn btn-xs btn-success text-white gap-1 font-extrabold rounded-lg shadow-sm"
+                            title="Clicking will automatically increase product inventory"
+                          >
+                            <PackagePlus className="w-3.5 h-3.5" /> Receive Purchase
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
       </div>
 
-      {/* VIEW PO DETAILS MODAL (Exact Specifications matching Invoice Format) */}
+      {/* VIEW PO DETAILS MODAL */}
       {selectedPO && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
           <div className="bg-white rounded-3xl max-w-2xl w-full p-6 space-y-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
@@ -409,6 +480,7 @@ export default function AdminPurchasesPage() {
                   </p>
                 </div>
                 <button 
+                  disabled={actionLoading}
                   onClick={() => handleReceivePurchase(selectedPO.poNumber)}
                   className="btn btn-sm btn-success text-white font-bold rounded-xl gap-1"
                 >
@@ -434,7 +506,7 @@ export default function AdminPurchasesPage() {
               </div>
             </div>
 
-            {/* Purchase Item Table matching User Format */}
+            {/* Purchase Item Table */}
             <div className="space-y-2">
               <h4 className="font-bold text-slate-900 text-sm">Purchased Product Line Items</h4>
               <div className="border border-slate-200 rounded-2xl overflow-hidden text-xs">
@@ -463,7 +535,7 @@ export default function AdminPurchasesPage() {
               </div>
             </div>
 
-            {/* Calculations Summary matching User Format */}
+            {/* Calculations Summary */}
             <div className="border-t-2 border-slate-900 pt-4">
               <div className="w-full sm:w-64 ml-auto space-y-2 text-xs font-bold text-slate-700">
                 <div className="flex justify-between">
@@ -500,7 +572,7 @@ export default function AdminPurchasesPage() {
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
                 <h3 className="font-black text-2xl text-slate-900">Create Purchase Order</h3>
-                <p className="text-xs text-slate-500">Order inventory stock directly from suppliers</p>
+                <p className="text-xs text-slate-500">Order inventory stock directly from registered suppliers</p>
               </div>
               <button onClick={() => setIsCreateModalOpen(false)} className="btn btn-ghost btn-circle btn-xs">
                 <X className="w-5 h-5" />
@@ -516,10 +588,9 @@ export default function AdminPurchasesPage() {
                     onChange={(e) => setNewSupplier(e.target.value)}
                     className="select select-sm select-bordered w-full font-bold focus:outline-none rounded-xl"
                   >
-                    <option value="ABC Electronics">ABC Electronics</option>
-                    <option value="Apex Wholesale Electronics Ltd">Apex Wholesale Electronics Ltd</option>
-                    <option value="Global Tech Supplies Ltd">Global Tech Supplies Ltd</option>
-                    <option value="Trend Apparel & Textile Mills">Trend Apparel & Textile Mills</option>
+                    {suppliersList.map((sup) => (
+                      <option key={sup} value={sup}>{sup}</option>
+                    ))}
                   </select>
                 </div>
 
@@ -530,9 +601,9 @@ export default function AdminPurchasesPage() {
                     onChange={(e) => setNewWarehouse(e.target.value)}
                     className="select select-sm select-bordered w-full font-bold focus:outline-none rounded-xl"
                   >
-                    <option value="Dhaka Warehouse">Dhaka Warehouse</option>
-                    <option value="Chittagong Warehouse">Chittagong Warehouse</option>
-                    <option value="Rangpur Warehouse">Rangpur Warehouse</option>
+                    {warehousesList.map((wh) => (
+                      <option key={wh} value={wh}>{wh}</option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -556,7 +627,7 @@ export default function AdminPurchasesPage() {
                       <input 
                         type="text"
                         required
-                        placeholder="Product Name (e.g. Mouse)"
+                        placeholder="Product Name (e.g. Headphones)"
                         value={item.name}
                         onChange={(e) => {
                           const updated = [...newItems];
@@ -582,7 +653,7 @@ export default function AdminPurchasesPage() {
                         type="number"
                         min={0}
                         required
-                        placeholder="Cost Price"
+                        placeholder="Cost Price (৳)"
                         value={item.cost}
                         onChange={(e) => {
                           const updated = [...newItems];
@@ -611,7 +682,7 @@ export default function AdminPurchasesPage() {
               {/* Shipping & Calculations */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
                 <div className="space-y-1">
-                  <label className="font-bold text-slate-700">Shipping Cost (৳)</label>
+                  <label className="font-bold text-slate-700">Shipping / Freight Cost (৳)</label>
                   <input 
                     type="number"
                     min={0}
@@ -640,8 +711,14 @@ export default function AdminPurchasesPage() {
                 </button>
                 <button
                   type="submit"
-                  className="btn btn-sm btn-primary font-bold rounded-xl"
+                  disabled={isSubmittingPO}
+                  className="btn btn-sm btn-primary font-bold rounded-xl gap-1 shadow-md shadow-primary/20"
                 >
+                  {isSubmittingPO ? (
+                    <span className="loading loading-spinner loading-xs"></span>
+                  ) : (
+                    <Plus className="w-4 h-4" />
+                  )}
                   Create Purchase Order
                 </button>
               </div>

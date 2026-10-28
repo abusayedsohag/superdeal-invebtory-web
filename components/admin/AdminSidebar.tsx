@@ -41,6 +41,7 @@ function SidebarLinks() {
     pendingReviews: number;
     pendingReturns: number;
     activeDeliveries: number;
+    pendingPurchases: number;
     lowStock: number;
     outOfStock: number;
     inventoryAlerts: number;
@@ -56,6 +57,7 @@ function SidebarLinks() {
     pendingReviews: 0,
     pendingReturns: 0,
     activeDeliveries: 0,
+    pendingPurchases: 0,
     lowStock: 0,
     outOfStock: 0,
     inventoryAlerts: 0,
@@ -108,7 +110,13 @@ function SidebarLinks() {
       badge: counts.warehouses > 0 ? `${counts.warehouses} Hubs` : "3 Hubs",
       badgeColor: "badge-ghost font-bold text-slate-300"
     },
-    { label: "Purchases", href: "/admin/purchases", icon: ShoppingBag },
+    { 
+      label: "Purchases", 
+      href: "/admin/purchases", 
+      icon: ShoppingBag,
+      badge: counts.pendingPurchases > 0 ? `${counts.pendingPurchases} Ordered` : "PO",
+      badgeColor: counts.pendingPurchases > 0 ? "badge-warning font-bold text-slate-950" : "badge-ghost text-slate-300 font-bold"
+    },
     { 
       label: "Suppliers", 
       href: "/admin/suppliers", 
