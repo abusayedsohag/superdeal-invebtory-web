@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { 
   Truck, 
   Search, 
@@ -22,7 +22,9 @@ import {
   Send,
   RefreshCcw,
   Sliders,
-  Settings
+  Settings,
+  PackageCheck,
+  Check
 } from "lucide-react";
 
 type CourierProvider = "Steadfast" | "Pathao" | "RedX" | "Custom";
@@ -44,7 +46,7 @@ interface DeliveryOrder {
   district: string;
   address: string;
   courier: CourierProvider;
-  trackingCode: string; // e.g. SD-9283928
+  trackingCode: string;
   cashToCollect: number;
   status: "Pending Dispatch" | "Consignment Created" | "In Transit" | "Out for Delivery" | "Delivered" | "Failed";
   dispatchDate: string;
@@ -87,65 +89,14 @@ export default function AdminDeliveryPage() {
     }
   ]);
 
-  const [deliveryOrders, setDeliveryOrders] = useState<DeliveryOrder[]>([
-    {
-      id: "DEL-1001",
-      orderId: "SD-10293",
-      customerName: "Rahim Ahmed",
-      customerPhone: "+880 1711-223344",
-      district: "Dhaka",
-      address: "House 42, Road 11, Block D, Banani",
-      courier: "Steadfast",
-      trackingCode: "SD-9283928",
-      cashToCollect: 2450,
-      status: "In Transit",
-      dispatchDate: "09 Oct 2026",
-      estimatedDelivery: "11 Oct 2026"
-    },
-    {
-      id: "DEL-1002",
-      orderId: "SD-10294",
-      customerName: "Tanvir Hossain",
-      customerPhone: "+880 1819-223344",
-      district: "Chittagong",
-      address: "Agrabad Commercial Area",
-      courier: "Pathao",
-      trackingCode: "PTH-889120",
-      cashToCollect: 0,
-      status: "Consignment Created",
-      dispatchDate: "09 Oct 2026",
-      estimatedDelivery: "12 Oct 2026"
-    },
-    {
-      id: "DEL-1003",
-      orderId: "SD-10295",
-      customerName: "Sharmin Sultana",
-      customerPhone: "+880 1733-445566",
-      district: "Sylhet",
-      address: "Lane 3, Zindabazar",
-      courier: "RedX",
-      trackingCode: "REDX-77491",
-      cashToCollect: 3200,
-      status: "Out for Delivery",
-      dispatchDate: "08 Oct 2026",
-      estimatedDelivery: "10 Oct 2026"
-    },
-    {
-      id: "DEL-1004",
-      orderId: "SD-10296",
-      customerName: "Mahmud Hasan",
-      customerPhone: "+880 1911-887766",
-      district: "Rangpur",
-      address: "Station Road, Near Town Hall",
-      courier: "Custom",
-      trackingCode: "RIDER-04",
-      cashToCollect: 890,
-      status: "Delivered",
-      dispatchDate: "06 Oct 2026",
-      estimatedDelivery: "08 Oct 2026"
-    }
-  ]);
-
+  const [deliveryOrders, setDeliveryOrders] = useState<DeliveryOrder[]>([]);
+  const [stats, setStats] = useState({
+    total: 0,
+    inTransit: 0,
+    outForDelivery: 0,
+    delivered: 0,
+  });
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCourier, setFilterCourier] = useState<string>("all");
   const [selectedOrder, setSelectedOrder] = useState<DeliveryOrder | null>(null);
@@ -153,31 +104,190 @@ export default function AdminDeliveryPage() {
   const [selectedCourierConfig, setSelectedCourierConfig] = useState<CourierConfig | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
+  // New Consignment Modal
+  const [isNewConsignmentOpen, setIsNewConsignmentOpen] = useState(false);
+  const [pendingOrders, setPendingOrders] = useState<any[]>([]);
+  const [newConsignmentForm, setNewConsignmentForm] = useState({
+    orderId: "",
+    courier: "Steadfast" as CourierProvider,
+    customerName: "",
+    customerPhone: "",
+    district: "Dhaka",
+    address: "",
+    cashToCollect: 0,
+  });
+  const [isCreatingConsignment, setIsCreatingConsignment] = useState(false);
+
   const showToast = (msg: string) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(null), 4000);
   };
 
-  const updateDeliveryStatus = (trackingCode: string, newStatus: DeliveryOrder["status"]) => {
-    setDeliveryOrders(prev => prev.map(o => o.trackingCode === trackingCode ? { ...o, status: newStatus } : o));
-    if (selectedOrder && selectedOrder.trackingCode === trackingCode) {
-      setSelectedOrder(prev => prev ? { ...prev, status: newStatus } : null);
+  // Fetch Delivery Shipments & Couriers from MongoDB
+  const fetchDeliveryData = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/delivery?courier=${filterCourier}&search=${encodeURIComponent(searchQuery)}`);
+      const data = await res.json();
+      if (data.success) {
+        setDeliveryOrders(data.deliveries || []);
+        if (data.courierConfigs && data.courierConfigs.length > 0) {
+          setCouriers(data.courierConfigs);
+        }
+        if (data.stats) {
+          setStats(data.stats);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load delivery data:", err);
+    } finally {
+      setLoading(false);
     }
-    showToast(`🚚 Delivery status for Tracking #${trackingCode} updated to '${newStatus}'`);
   };
 
-  const filteredOrders = deliveryOrders.filter(o => {
-    const matchesSearch = 
-      o.orderId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      o.trackingCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      o.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      o.district.toLowerCase().includes(searchQuery.toLowerCase());
+  useEffect(() => {
+    fetchDeliveryData();
+  }, [filterCourier]);
 
-    if (filterCourier !== "all") {
-      return matchesSearch && o.courier === filterCourier;
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchDeliveryData();
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Fetch pending orders eligible for consignment
+  const fetchPendingOrders = async () => {
+    try {
+      const res = await fetch("/api/orders?limit=20");
+      const data = await res.json();
+      if (data.success && Array.isArray(data.orders)) {
+        // filter orders that do not have tracking code yet
+        const unassigned = data.orders.filter((o: any) => !o.trackingCode && o.orderStatus !== "Cancelled");
+        setPendingOrders(unassigned);
+        if (unassigned.length > 0) {
+          const first = unassigned[0];
+          setNewConsignmentForm({
+            orderId: first.id,
+            courier: "Steadfast",
+            customerName: first.customer,
+            customerPhone: first.phone,
+            district: first.district || "Dhaka",
+            address: first.address || "",
+            cashToCollect: first.paymentStatus === "Paid" ? 0 : first.total,
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch pending orders for consignment:", err);
     }
-    return matchesSearch;
-  });
+  };
+
+  const handleOpenNewConsignment = () => {
+    fetchPendingOrders();
+    setIsNewConsignmentOpen(true);
+  };
+
+  const handleSelectOrderForConsignment = (orderId: string) => {
+    const ord = pendingOrders.find((o) => o.id === orderId);
+    if (ord) {
+      setNewConsignmentForm({
+        ...newConsignmentForm,
+        orderId: ord.id,
+        customerName: ord.customer,
+        customerPhone: ord.phone,
+        district: ord.district || "Dhaka",
+        address: ord.address || "",
+        cashToCollect: ord.paymentStatus === "Paid" ? 0 : ord.total,
+      });
+    }
+  };
+
+  const handleCreateConsignmentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newConsignmentForm.orderId) {
+      alert("Please select an order for consignment dispatch");
+      return;
+    }
+
+    setIsCreatingConsignment(true);
+    try {
+      const res = await fetch("/api/delivery", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newConsignmentForm),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        showToast(`📦 Consignment created: ${data.delivery?.trackingCode}`);
+        setIsNewConsignmentOpen(false);
+        fetchDeliveryData();
+      } else {
+        alert(data.message || "Failed to create consignment");
+      }
+    } catch (err) {
+      console.error("Error creating consignment:", err);
+      alert("Failed to submit consignment to courier");
+    } finally {
+      setIsCreatingConsignment(false);
+    }
+  };
+
+  const updateDeliveryStatus = async (trackingCode: string, newStatus: DeliveryOrder["status"]) => {
+    try {
+      const res = await fetch("/api/delivery", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "updateStatus",
+          trackingCode,
+          status: newStatus,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setDeliveryOrders((prev) =>
+          prev.map((o) => (o.trackingCode === trackingCode ? { ...o, status: newStatus } : o))
+        );
+        if (selectedOrder && selectedOrder.trackingCode === trackingCode) {
+          setSelectedOrder((prev) => (prev ? { ...prev, status: newStatus } : null));
+        }
+        showToast(`🚚 Delivery status for Tracking #${trackingCode} updated to '${newStatus}'`);
+      }
+    } catch (err) {
+      console.error("Error updating status:", err);
+    }
+  };
+
+  const handleSaveCourierConfig = async () => {
+    if (!selectedCourierConfig) return;
+    try {
+      const res = await fetch("/api/delivery", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "updateConfig",
+          courierName: selectedCourierConfig.name,
+          apiKey: selectedCourierConfig.apiKey,
+          webhookUrl: selectedCourierConfig.webhookUrl,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Saved API keys for ${selectedCourierConfig.name}`);
+        setCouriers((prev) =>
+          prev.map((c) => (c.name === selectedCourierConfig.name ? selectedCourierConfig : c))
+        );
+        setSelectedCourierConfig(null);
+      }
+    } catch (err) {
+      console.error("Failed to save courier config:", err);
+    }
+  };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-16">
@@ -196,25 +306,33 @@ export default function AdminDeliveryPage() {
             <Truck className="w-8 h-8 text-primary" /> Delivery & Courier Management
           </h1>
           <p className="text-xs text-slate-500">
-            Automated courier integration architecture: Steadfast, Pathao, RedX, and Custom riders with live tracking & status synchronization
+            Steadfast, Pathao, RedX, and Custom riders with live tracking & status synchronization into MongoDB
           </p>
         </div>
 
-        <button 
-          onClick={() => setIsConfigModalOpen(true)}
-          className="btn btn-outline btn-sm font-bold rounded-xl gap-2"
-        >
-          <Settings className="w-4 h-4 text-primary" /> Courier API Integrations
-        </button>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={fetchDeliveryData}
+            disabled={loading}
+            className="btn btn-outline btn-sm font-bold rounded-xl gap-2"
+          >
+            <RefreshCcw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} /> Refresh
+          </button>
+          <button 
+            onClick={handleOpenNewConsignment}
+            className="btn btn-primary btn-sm font-bold rounded-xl gap-2 shadow-md shadow-primary/20"
+          >
+            <Plus className="w-4 h-4" /> Create Consignment
+          </button>
+        </div>
       </div>
 
-      {/* COURIERS ARCHITECTURE PROVIDERS GRID (Steadfast, Pathao, RedX, Custom) */}
+      {/* COURIERS ARCHITECTURE PROVIDERS GRID */}
       <div className="space-y-3">
         <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider block">
-          Integrated Courier Service Providers (Architecture Stack)
+          Integrated Courier Service Providers (Live Database)
         </span>
 
-        {/* Visual Tree & Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {couriers.map((c) => (
             <div 
@@ -255,32 +373,46 @@ export default function AdminDeliveryPage() {
         </div>
       </div>
 
-      {/* SAMPLE DEMONSTRATION CARD (Order #SD-10293 | Steadfast | SD-9283928 | In Transit) */}
-      <div className="p-5 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl shadow-xl space-y-3 border border-slate-800">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <span className="badge badge-warning text-slate-950 font-black text-[10px] uppercase">
-              Featured Courier Order Specification
-            </span>
-            <div className="flex items-center gap-3 mt-1">
-              <h2 className="text-2xl font-black font-mono">Order #SD-10293</h2>
-              <span className="badge badge-accent text-slate-950 font-black text-xs">Courier: Steadfast</span>
-              <span className="badge bg-indigo-600 text-white font-extrabold text-xs">Status: In Transit</span>
-            </div>
-            <p className="text-xs text-slate-300 mt-1">
-              Consignment Tracking Code: <strong className="font-mono text-amber-300 text-sm">SD-9283928</strong> • Customer: <strong>Rahim Ahmed (Banani, Dhaka)</strong>
-            </p>
+      {/* STATS OVERVIEW CARDS */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold">
+            <Truck className="w-5 h-5" />
           </div>
+          <div>
+            <p className="text-[11px] font-bold text-slate-400 uppercase">Total Shipments</p>
+            <h3 className="text-xl font-black text-slate-900">{stats.total}</h3>
+          </div>
+        </div>
 
-          <button
-            onClick={() => {
-              const ord = deliveryOrders.find(o => o.orderId === "SD-10293");
-              if (ord) setSelectedOrder(ord);
-            }}
-            className="btn btn-sm bg-white text-slate-900 hover:bg-slate-100 font-bold rounded-xl gap-1 shrink-0 shadow-md"
-          >
-            <Eye className="w-4 h-4 text-primary" /> View Live Tracking #SD-9283928
-          </button>
+        <div className="bg-white p-4 rounded-2xl border border-indigo-200 bg-indigo-50/20 shadow-xs flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-indigo-600/10 flex items-center justify-center text-indigo-600 font-bold">
+            <Clock className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-[11px] font-bold text-indigo-700 uppercase">In Transit</p>
+            <h3 className="text-xl font-black text-indigo-700">{stats.inTransit}</h3>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-amber-200 bg-amber-50/20 shadow-xs flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600 font-bold">
+            <ArrowRight className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-[11px] font-bold text-amber-700 uppercase">Out for Delivery</p>
+            <h3 className="text-xl font-black text-amber-700">{stats.outForDelivery}</h3>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-emerald-200 bg-emerald-50/20 shadow-xs flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 font-bold">
+            <CheckCircle2 className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-[11px] font-bold text-emerald-700 uppercase">Delivered</p>
+            <h3 className="text-xl font-black text-emerald-700">{stats.delivered}</h3>
+          </div>
         </div>
       </div>
 
@@ -290,7 +422,7 @@ export default function AdminDeliveryPage() {
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search Order ID, Tracking Code (SD-9283928), Customer..."
+            placeholder="Search Order ID, Tracking Code, Customer..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="input input-sm input-bordered w-full pl-9 text-xs focus:outline-none rounded-xl"
@@ -328,65 +460,82 @@ export default function AdminDeliveryPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {filteredOrders.map((o) => (
-              <tr key={o.id} className="hover:bg-slate-50/50">
-                <td className="font-mono font-extrabold text-primary text-base">
-                  #{o.orderId}
-                </td>
-
-                <td>
-                  <p className="font-bold text-slate-900 text-xs">{o.customerName}</p>
-                  <p className="text-[11px] text-slate-400 flex items-center gap-1">
-                    <MapPin className="w-3 h-3 text-primary" /> {o.address}, {o.district}
-                  </p>
-                </td>
-
-                <td>
-                  <span className="badge badge-sm badge-neutral font-extrabold text-slate-200">
-                    {o.courier}
-                  </span>
-                </td>
-
-                <td>
-                  <span className="font-mono font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-xs">
-                    {o.trackingCode}
-                  </span>
-                </td>
-
-                <td className="text-right font-mono font-extrabold text-slate-900 text-base">
-                  ৳{o.cashToCollect.toLocaleString()}
-                </td>
-
-                <td>
-                  <select
-                    value={o.status}
-                    onChange={(e) => updateDeliveryStatus(o.trackingCode, e.target.value as any)}
-                    className={`select select-xs font-extrabold focus:outline-none ${
-                      o.status === "Delivered" ? "badge-success text-white" :
-                      o.status === "In Transit" ? "bg-indigo-600 text-white" :
-                      o.status === "Out for Delivery" ? "badge-accent text-slate-950" : "badge-warning text-slate-950"
-                    }`}
-                  >
-                    <option value="Pending Dispatch">Pending Dispatch</option>
-                    <option value="Consignment Created">Consignment Created</option>
-                    <option value="In Transit">In Transit</option>
-                    <option value="Out for Delivery">Out for Delivery</option>
-                    <option value="Delivered">Delivered</option>
-                    <option value="Failed">Delivery Failed</option>
-                  </select>
-                </td>
-
-                <td className="text-center">
-                  <button
-                    onClick={() => setSelectedOrder(o)}
-                    className="btn btn-xs btn-primary gap-1 font-bold rounded-lg"
-                    title="View Live Shipment Timeline"
-                  >
-                    <Eye className="w-3.5 h-3.5" /> Track Package
-                  </button>
+            {loading ? (
+              <tr>
+                <td colSpan={7} className="text-center py-12 text-slate-400">
+                  <span className="loading loading-spinner loading-md text-primary"></span>
+                  <p className="text-xs mt-2 font-medium">Loading courier shipments from MongoDB...</p>
                 </td>
               </tr>
-            ))}
+            ) : deliveryOrders.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="text-center py-12 text-slate-400">
+                  <Truck className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+                  <p className="text-sm font-bold text-slate-600">No shipments found</p>
+                  <p className="text-xs text-slate-400">Click "Create Consignment" to dispatch an order.</p>
+                </td>
+              </tr>
+            ) : (
+              deliveryOrders.map((o) => (
+                <tr key={o.id} className="hover:bg-slate-50/50">
+                  <td className="font-mono font-extrabold text-primary text-base">
+                    #{o.orderId}
+                  </td>
+
+                  <td>
+                    <p className="font-bold text-slate-900 text-xs">{o.customerName}</p>
+                    <p className="text-[11px] text-slate-400 flex items-center gap-1">
+                      <MapPin className="w-3 h-3 text-primary" /> {o.address}, {o.district}
+                    </p>
+                  </td>
+
+                  <td>
+                    <span className="badge badge-sm badge-neutral font-extrabold text-slate-200">
+                      {o.courier}
+                    </span>
+                  </td>
+
+                  <td>
+                    <span className="font-mono font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-xs">
+                      {o.trackingCode}
+                    </span>
+                  </td>
+
+                  <td className="text-right font-mono font-extrabold text-slate-900 text-base">
+                    ৳{o.cashToCollect.toLocaleString()}
+                  </td>
+
+                  <td>
+                    <select
+                      value={o.status}
+                      onChange={(e) => updateDeliveryStatus(o.trackingCode, e.target.value as any)}
+                      className={`select select-xs font-extrabold focus:outline-none ${
+                        o.status === "Delivered" ? "badge-success text-white" :
+                        o.status === "In Transit" ? "bg-indigo-600 text-white" :
+                        o.status === "Out for Delivery" ? "badge-accent text-slate-950" : "badge-warning text-slate-950"
+                      }`}
+                    >
+                      <option value="Pending Dispatch">Pending Dispatch</option>
+                      <option value="Consignment Created">Consignment Created</option>
+                      <option value="In Transit">In Transit</option>
+                      <option value="Out for Delivery">Out for Delivery</option>
+                      <option value="Delivered">Delivered</option>
+                      <option value="Failed">Delivery Failed</option>
+                    </select>
+                  </td>
+
+                  <td className="text-center">
+                    <button
+                      onClick={() => setSelectedOrder(o)}
+                      className="btn btn-xs btn-primary gap-1 font-bold rounded-lg"
+                      title="View Live Shipment Timeline"
+                    >
+                      <Eye className="w-3.5 h-3.5" /> Track Package
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -487,6 +636,146 @@ export default function AdminDeliveryPage() {
         </div>
       )}
 
+      {/* CREATE NEW CONSIGNMENT MODAL */}
+      {isNewConsignmentOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-2xl border border-slate-200 max-h-[92vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="font-black text-xl text-slate-900 flex items-center gap-2">
+                  <PackageCheck className="w-5 h-5 text-primary" /> Create Courier Consignment
+                </h3>
+                <p className="text-xs text-slate-500">Dispatch an order with Steadfast / Pathao / RedX</p>
+              </div>
+              <button onClick={() => setIsNewConsignmentOpen(false)} className="btn btn-ghost btn-circle btn-xs">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateConsignmentSubmit} className="space-y-4 text-xs">
+              <div className="space-y-1">
+                <label className="font-bold text-slate-700">Select Order to Dispatch *</label>
+                {pendingOrders.length === 0 ? (
+                  <p className="p-3 bg-amber-50 rounded-xl text-amber-800 text-xs">
+                    No unassigned orders found. All orders have already been assigned courier consignments.
+                  </p>
+                ) : (
+                  <select
+                    required
+                    value={newConsignmentForm.orderId}
+                    onChange={(e) => handleSelectOrderForConsignment(e.target.value)}
+                    className="select select-bordered select-sm w-full font-bold text-slate-900 rounded-xl"
+                  >
+                    {pendingOrders.map((ord) => (
+                      <option key={ord.id} value={ord.id}>
+                        #{ord.id} — {ord.customer} (৳{ord.total.toLocaleString()} - {ord.district})
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-slate-700">Choose Courier Provider *</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(["Steadfast", "Pathao", "RedX", "Custom"] as const).map((prov) => (
+                    <button
+                      key={prov}
+                      type="button"
+                      onClick={() => setNewConsignmentForm({ ...newConsignmentForm, courier: prov })}
+                      className={`btn btn-sm rounded-xl font-bold ${
+                        newConsignmentForm.courier === prov ? "btn-primary" : "btn-outline"
+                      }`}
+                    >
+                      {prov}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">Customer Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={newConsignmentForm.customerName}
+                    onChange={(e) => setNewConsignmentForm({ ...newConsignmentForm, customerName: e.target.value })}
+                    className="input input-sm input-bordered w-full rounded-xl"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">Customer Phone</label>
+                  <input
+                    type="text"
+                    required
+                    value={newConsignmentForm.customerPhone}
+                    onChange={(e) => setNewConsignmentForm({ ...newConsignmentForm, customerPhone: e.target.value })}
+                    className="input input-sm input-bordered w-full rounded-xl"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">Delivery District</label>
+                  <input
+                    type="text"
+                    required
+                    value={newConsignmentForm.district}
+                    onChange={(e) => setNewConsignmentForm({ ...newConsignmentForm, district: e.target.value })}
+                    className="input input-sm input-bordered w-full rounded-xl"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">Cash to Collect (৳)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={newConsignmentForm.cashToCollect}
+                    onChange={(e) => setNewConsignmentForm({ ...newConsignmentForm, cashToCollect: Number(e.target.value) })}
+                    className="input input-sm input-bordered w-full rounded-xl font-mono font-bold"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-slate-700">Full Delivery Address</label>
+                <textarea
+                  rows={2}
+                  required
+                  value={newConsignmentForm.address}
+                  onChange={(e) => setNewConsignmentForm({ ...newConsignmentForm, address: e.target.value })}
+                  className="textarea textarea-bordered w-full rounded-xl text-xs"
+                ></textarea>
+              </div>
+
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsNewConsignmentOpen(false)}
+                  className="btn btn-sm btn-ghost font-bold text-slate-500"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isCreatingConsignment || !newConsignmentForm.orderId}
+                  className="btn btn-sm btn-primary font-bold rounded-xl gap-1 shadow-md shadow-primary/20"
+                >
+                  {isCreatingConsignment ? (
+                    <span className="loading loading-spinner loading-xs"></span>
+                  ) : (
+                    <Send className="w-3.5 h-3.5" />
+                  )}
+                  Generate Consignment
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* COURIER API CONFIGURATION MODAL */}
       {selectedCourierConfig && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
@@ -531,10 +820,7 @@ export default function AdminDeliveryPage() {
                 Cancel
               </button>
               <button 
-                onClick={() => {
-                  showToast(`Saved API keys for ${selectedCourierConfig.name}`);
-                  setSelectedCourierConfig(null);
-                }}
+                onClick={handleSaveCourierConfig}
                 className="btn btn-sm btn-primary font-bold rounded-xl"
               >
                 Save Integration Keys

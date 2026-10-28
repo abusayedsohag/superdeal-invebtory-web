@@ -13,9 +13,10 @@ export async function GET() {
     const ordersCollection = db.collection("orders");
     const reviewsCollection = db.collection("reviews");
     const returnsCollection = db.collection("returns");
+    const deliveriesCollection = db.collection("deliveries");
 
     // Run parallel counts
-    const [totalProducts, totalCategories, totalWarehouses, totalSuppliers, totalExpenses, totalCoupons, totalOrders, newOrders, lowStockCount, outOfStockCount, pendingReviews, pendingReturns] = await Promise.all([
+    const [totalProducts, totalCategories, totalWarehouses, totalSuppliers, totalExpenses, totalCoupons, totalOrders, newOrders, lowStockCount, outOfStockCount, pendingReviews, pendingReturns, inTransitDeliveries] = await Promise.all([
       productsCollection.countDocuments({}),
       categoriesCollection.countDocuments({ status: { $ne: "Inactive" } }),
       warehousesCollection.countDocuments({ status: { $ne: "Inactive" } }),
@@ -42,6 +43,7 @@ export async function GET() {
       }),
       reviewsCollection.countDocuments({ status: "Pending" }),
       returnsCollection.countDocuments({ status: "Pending" }),
+      deliveriesCollection.countDocuments({ status: { $in: ["In Transit", "Out for Delivery"] } }),
     ]);
 
     // Inventory alert count: combined low stock + out of stock
@@ -60,6 +62,7 @@ export async function GET() {
         newOrders: newOrders,
         pendingReviews: pendingReviews,
         pendingReturns: pendingReturns,
+        activeDeliveries: inTransitDeliveries,
         lowStock: lowStockCount,
         outOfStock: outOfStockCount,
         inventoryAlerts,

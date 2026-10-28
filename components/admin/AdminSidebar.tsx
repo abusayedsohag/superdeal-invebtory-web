@@ -40,6 +40,7 @@ function SidebarLinks() {
     newOrders: number;
     pendingReviews: number;
     pendingReturns: number;
+    activeDeliveries: number;
     lowStock: number;
     outOfStock: number;
     inventoryAlerts: number;
@@ -54,6 +55,7 @@ function SidebarLinks() {
     newOrders: 0,
     pendingReviews: 0,
     pendingReturns: 0,
+    activeDeliveries: 0,
     lowStock: 0,
     outOfStock: 0,
     inventoryAlerts: 0,
@@ -128,7 +130,13 @@ function SidebarLinks() {
       badge: counts.pendingReturns > 0 ? `${counts.pendingReturns} Claim` : "Returns", 
       badgeColor: counts.pendingReturns > 0 ? "badge-warning font-bold text-slate-950" : "badge-ghost text-slate-300 font-bold" 
     },
-    { label: "Delivery & Courier", href: "/admin/delivery", icon: Truck },
+    { 
+      label: "Delivery & Courier", 
+      href: "/admin/delivery", 
+      icon: Truck,
+      badge: counts.activeDeliveries > 0 ? `${counts.activeDeliveries} Active` : "Logistics",
+      badgeColor: counts.activeDeliveries > 0 ? "badge-info text-white font-bold" : "badge-ghost text-slate-300 font-bold"
+    },
     { label: "Customers", href: "/admin/customers", icon: Users },
     { 
       label: "Expenses", 
