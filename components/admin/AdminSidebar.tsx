@@ -86,64 +86,80 @@ function SidebarLinks() {
       href: "/admin/products", 
       icon: Package, 
       badge: counts.products > 0 ? String(counts.products) : "0",
-      badgeColor: "badge-primary"
+      badgeColor: "bg-blue-500/20 text-blue-300 border border-blue-500/30"
     },
     { 
       label: "Categories", 
       href: "/admin/categories", 
       icon: Grid,
       badge: counts.categories > 0 ? String(counts.categories) : "0",
-      badgeColor: "badge-secondary"
+      badgeColor: "bg-purple-500/20 text-purple-300 border border-purple-500/30"
     },
     { 
       label: "Inventory", 
       href: "/admin/inventory", 
       icon: Boxes, 
       badge: counts.inventoryAlerts > 0 ? `Alert: ${counts.inventoryAlerts}` : "All Good", 
-      badgeColor: counts.inventoryAlerts > 0 ? "badge-error text-white" : "badge-success text-white" 
+      badgeColor: counts.inventoryAlerts > 0 
+        ? "bg-rose-500/25 text-rose-300 border border-rose-500/40 font-black animate-pulse" 
+        : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" 
     },
-    { label: "Barcode Entry", href: "/admin/barcode", icon: Barcode, badge: "Barcode", badgeColor: "badge-accent text-slate-950 font-black" },
+    { 
+      label: "Barcode Entry", 
+      href: "/admin/barcode", 
+      icon: Barcode, 
+      badge: "Barcode", 
+      badgeColor: "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-bold" 
+    },
     { 
       label: "Warehouses", 
       href: "/admin/warehouses", 
       icon: Building2, 
       badge: counts.warehouses > 0 ? `${counts.warehouses} Hubs` : "3 Hubs",
-      badgeColor: "badge-ghost font-bold text-slate-300"
+      badgeColor: "bg-slate-800 text-slate-300 border border-slate-700/80"
     },
     { 
       label: "Purchases", 
       href: "/admin/purchases", 
       icon: ShoppingBag,
       badge: counts.pendingPurchases > 0 ? `${counts.pendingPurchases} Ordered` : "PO",
-      badgeColor: counts.pendingPurchases > 0 ? "badge-warning font-bold text-slate-950" : "badge-ghost text-slate-300 font-bold"
+      badgeColor: counts.pendingPurchases > 0 
+        ? "bg-amber-500/25 text-amber-300 border border-amber-500/40 font-black" 
+        : "bg-slate-800 text-slate-400 border border-slate-700/80"
     },
     { 
       label: "Suppliers", 
       href: "/admin/suppliers", 
       icon: Truck,
       badge: counts.suppliers > 0 ? String(counts.suppliers) : "0",
-      badgeColor: "badge-neutral font-bold text-slate-300"
+      badgeColor: "bg-slate-800 text-slate-300 border border-slate-700/80"
     },
     { 
       label: "Orders", 
       href: "/admin/orders", 
       icon: ShoppingCart, 
       badge: counts.newOrders > 0 ? `${counts.newOrders} New` : counts.orders > 0 ? String(counts.orders) : "0", 
-      badgeColor: counts.newOrders > 0 ? "badge-primary text-white font-bold" : "badge-ghost text-slate-300 font-bold" 
+      badgeColor: counts.newOrders > 0 
+        ? "bg-primary text-white border border-primary/50 font-black shadow-xs shadow-primary/40" 
+        : "bg-slate-800 text-slate-300 border border-slate-700/80" 
     },
     { 
-      label: "Returns & Refunds", 
+      label: "Returns", 
       href: "/admin/returns", 
       icon: RotateCcw, 
       badge: counts.pendingReturns > 0 ? `${counts.pendingReturns} Claim` : "Returns", 
-      badgeColor: counts.pendingReturns > 0 ? "badge-warning font-bold text-slate-950" : "badge-ghost text-slate-300 font-bold" 
+      badgeColor: counts.pendingReturns > 0 
+        ? "bg-rose-500/25 text-rose-300 border border-rose-500/40 font-black" 
+        : "bg-slate-800 text-slate-400 border border-slate-700/80" 
     },
     { 
-      label: "Delivery & Courier", 
+      label: "Courier", 
       href: "/admin/delivery", 
       icon: Truck,
       badge: counts.activeDeliveries > 0 ? `${counts.activeDeliveries} Active` : "Logistics",
-      badgeColor: counts.activeDeliveries > 0 ? "badge-info text-white font-bold" : "badge-ghost text-slate-300 font-bold"
+      badgeColor: counts.activeDeliveries > 0 
+        ? "bg-sky-500/25 text-sky-300 border border-sky-500/40 font-bold" 
+        : "bg-slate-800 text-slate-400 border border-slate-700/80"
     },
     { label: "Customers", href: "/admin/customers", icon: Users },
     { 
@@ -151,14 +167,14 @@ function SidebarLinks() {
       href: "/admin/expenses", 
       icon: Receipt,
       badge: counts.expenses > 0 ? String(counts.expenses) : "0",
-      badgeColor: "badge-ghost font-bold text-slate-300"
+      badgeColor: "bg-slate-800 text-slate-300 border border-slate-700/80"
     },
     { 
       label: "Coupons", 
       href: "/admin/coupons", 
       icon: Ticket,
       badge: counts.coupons > 0 ? String(counts.coupons) : "0",
-      badgeColor: "badge-accent font-bold text-slate-950"
+      badgeColor: "bg-teal-500/20 text-teal-300 border border-teal-500/30 font-bold"
     },
     { label: "Marketing", href: "/admin/marketing", icon: Megaphone },
     { 
@@ -166,7 +182,9 @@ function SidebarLinks() {
       href: "/admin/reviews", 
       icon: Star, 
       badge: counts.pendingReviews > 0 ? `${counts.pendingReviews} New` : "Reviews", 
-      badgeColor: counts.pendingReviews > 0 ? "badge-warning font-bold text-slate-950" : "badge-ghost text-slate-300 font-bold" 
+      badgeColor: counts.pendingReviews > 0 
+        ? "bg-amber-500/25 text-amber-300 border border-amber-500/40 font-black" 
+        : "bg-slate-800 text-slate-400 border border-slate-700/80" 
     },
     { label: "Reports", href: "/admin/reports", icon: BarChart3 },
     { label: "Users & Roles", href: "/admin/users-roles", icon: UserCheck },
@@ -197,7 +215,7 @@ function SidebarLinks() {
               <span>{item.label}</span>
             </div>
             {item.badge ? (
-              <span className={`badge badge-xs ${item.badgeColor || "badge-neutral"} font-bold`}>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold tracking-tight inline-flex items-center justify-center leading-none ${item.badgeColor || "bg-slate-800 text-slate-300 border border-slate-700/80"}`}>
                 {item.badge}
               </span>
             ) : (
