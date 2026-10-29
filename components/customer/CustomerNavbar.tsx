@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { getStoredCart } from "@/lib/cart-store";
+import { getStoredWishlist } from "@/lib/wishlist-store";
 import {
   ShoppingBag,
   Heart,
@@ -13,17 +14,30 @@ import {
   Package,
   Grid,
   Home,
-  ShoppingCart
+  ShoppingCart,
+  LogIn,
+  LogOut,
+  UserPlus
 } from "lucide-react";
 
 function NavLinks() {
   const pathname = usePathname();
+  const [wishlistCount, setWishlistCount] = useState<number>(0);
+
+  useEffect(() => {
+    const updateWishlistCount = () => {
+      setWishlistCount(getStoredWishlist().length);
+    };
+    updateWishlistCount();
+    window.addEventListener("wishlistUpdated", updateWishlistCount);
+    return () => window.removeEventListener("wishlistUpdated", updateWishlistCount);
+  }, []);
 
   const navLinks = [
     { label: "Home", href: "/", icon: Home },
     { label: "Products", href: "/products", icon: ShoppingBag },
     { label: "Categories", href: "/categories", icon: Grid },
-    { label: "Wishlist", href: "/wishlist", icon: Heart, badge: 3 },
+    { label: "Wishlist", href: "/wishlist", icon: Heart, badge: wishlistCount > 0 ? wishlistCount : undefined },
     { label: "My Orders", href: "/my-orders", icon: Package },
   ];
 
@@ -50,11 +64,67 @@ function NavLinks() {
 }
 
 export default function CustomerNavbar() {
+  const router = useRouter();
+  const [currentUser, setCurrentUser] = useState<{
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    avatar?: string;
+  } | null>(null);
+  const [loadingUser, setLoadingUser] = useState(true);
 
   const [category, setCategory] = useState<
     { id: string; name: string }[]
   >([]);
   const [cartCount, setCartCount] = useState<number>(3);
+  const [wishlistCount, setWishlistCount] = useState<number>(0);
+
+  useEffect(() => {
+    const updateWishlist = () => {
+      setWishlistCount(getStoredWishlist().length);
+    };
+    updateWishlist();
+    window.addEventListener("wishlistUpdated", updateWishlist);
+    return () => window.removeEventListener("wishlistUpdated", updateWishlist);
+  }, []);
+
+  // Sync current user session
+  const fetchCurrentUser = async () => {
+    try {
+      const res = await fetch("/api/auth/me");
+      const data = await res.json();
+      if (data.authenticated && data.user) {
+        setCurrentUser(data.user);
+      } else {
+        setCurrentUser(null);
+      }
+    } catch {
+      setCurrentUser(null);
+    } finally {
+      setLoadingUser(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCurrentUser();
+
+    // Listen to global auth changes (login/logout elsewhere)
+    const handleAuthChange = () => fetchCurrentUser();
+    window.addEventListener("authChanged", handleAuthChange);
+    return () => window.removeEventListener("authChanged", handleAuthChange);
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      setCurrentUser(null);
+      window.dispatchEvent(new Event("authChanged"));
+      router.push("/login");
+    } catch (err) {
+      console.error("Logout failed:", err);
+    }
+  };
 
   useEffect(() => {
     // Sync cart badge count
@@ -130,35 +200,85 @@ export default function CustomerNavbar() {
           </div>
         </div>
 
-        {/* Action Icons */}
-        <div className="flex items-center gap-1 sm:gap-3">
-          <Link href="/wishlist" className="btn btn-ghost btn-circle btn-sm sm:btn-md relative">
-            <Heart className="w-4 h-4 sm:w-6 sm:h-6 text-base-content" />
-            <span className="badge badge-xs sm:badge-sm badge-secondary absolute -top-1 -right-1">3</span>
+        {/* Action Icons & User Session */}
+        <div className="flex items-center gap-1 sm:gap-2">
+          <Link href="/wishlist" className="btn btn-ghost btn-circle btn-sm sm:btn-md relative" title="Wishlist">
+            <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-base-content" />
+            {wishlistCount > 0 && (
+              <span className="badge badge-xs sm:badge-sm badge-secondary absolute -top-1 -right-1">
+                {wishlistCount}
+              </span>
+            )}
           </Link>
 
-          <Link href="/cart" className="btn btn-ghost btn-circle btn-sm sm:btn-md relative">
-            <ShoppingCart className="w-4 h-4 sm:w-6 sm:h-6 text-base-content" />
+          <Link href="/cart" className="btn btn-ghost btn-circle btn-sm sm:btn-md relative" title="Cart">
+            <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 text-base-content" />
             <span className="badge badge-xs sm:badge-sm badge-primary absolute -top-1 -right-1 font-bold">
               {cartCount}
             </span>
           </Link>
 
-          <div className="dropdown dropdown-end">
-            <label tabIndex={0} className="btn btn-ghost btn-circle avatar btn-sm sm:btn-md">
-              <div className="w-7 sm:w-10 rounded-full ring ring-primary ring-offset-base-100 ring-offset-1 sm:ring-offset-2">
-                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Avatar" />
-              </div>
-            </label>
-            <ul tabIndex={0} className="mt-3 z-1 p-2 shadow-lg menu menu-sm dropdown-content bg-base-100 rounded-box w-48 sm:w-52 border border-base-200">
-              <li className="menu-title px-4 py-2 text-xs font-semibold uppercase text-base-content/60">Account</li>
-              <li><Link href="/account"><User className="w-4 h-4" /> Profile & Settings</Link></li>
-              <li><Link href="/my-orders"><Package className="w-4 h-4" /> My Orders</Link></li>
-              <li><Link href="/wishlist"><Heart className="w-4 h-4" /> Wishlist</Link></li>
-              <div className="divider my-1"></div>
-              <li><Link href="/admin/dashboard" className="text-primary font-semibold"><ShieldCheck className="w-4 h-4" /> Admin Dashboard</Link></li>
-            </ul>
-          </div>
+          {loadingUser ? (
+            <div className="w-8 h-8 rounded-full bg-base-300 animate-pulse"></div>
+          ) : currentUser ? (
+            <div className="dropdown dropdown-end">
+              <label tabIndex={0} className="btn btn-ghost btn-circle avatar btn-sm sm:btn-md">
+                <div className="w-7 sm:w-9 rounded-full ring ring-primary ring-offset-base-100 ring-offset-1">
+                  <img
+                    src={currentUser.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(currentUser.name)}`}
+                    alt={currentUser.name}
+                  />
+                </div>
+              </label>
+              <ul tabIndex={0} className="mt-3 z-50 p-2 shadow-xl menu menu-sm dropdown-content bg-base-100 rounded-box w-56 border border-base-200">
+                <li className="px-4 py-2 border-b border-base-200 pointer-events-none">
+                  <div className="flex flex-col gap-0.5 p-0">
+                    <span className="font-bold text-sm text-base-content truncate">{currentUser.name}</span>
+                    <span className="text-xs text-base-content/60 truncate">{currentUser.email}</span>
+                    <span className="badge badge-primary badge-xs mt-1 font-medium">{currentUser.role}</span>
+                  </div>
+                </li>
+                <li className="mt-1"><Link href="/account"><User className="w-4 h-4" /> My Profile</Link></li>
+                <li><Link href="/my-orders"><Package className="w-4 h-4" /> My Orders</Link></li>
+                <li><Link href="/wishlist"><Heart className="w-4 h-4" /> Wishlist</Link></li>
+
+                {currentUser.role !== "Customer" && (
+                  <>
+                    <div className="divider my-1"></div>
+                    <li>
+                      <Link href="/admin/dashboard" className="text-primary font-semibold">
+                        <ShieldCheck className="w-4 h-4" /> Staff Dashboard
+                      </Link>
+                    </li>
+                  </>
+                )}
+
+                <div className="divider my-1"></div>
+                <li>
+                  <button onClick={handleLogout} className="text-error font-medium hover:bg-error/10">
+                    <LogOut className="w-4 h-4" /> Sign Out
+                  </button>
+                </li>
+              </ul>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1 sm:gap-2">
+              <Link
+                href="/login"
+                className="btn btn-xs sm:btn-sm btn-ghost gap-1 px-2 sm:px-3 text-xs sm:text-sm font-semibold"
+              >
+                <LogIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span>Sign In</span>
+              </Link>
+              <Link
+                href="/register"
+                className="btn btn-xs sm:btn-sm btn-primary gap-1 px-2.5 sm:px-3.5 text-xs sm:text-sm font-semibold shadow-sm"
+              >
+                <UserPlus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Register</span>
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 

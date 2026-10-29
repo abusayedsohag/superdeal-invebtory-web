@@ -29,7 +29,7 @@ export interface RoleDocument {
 
 export interface UserDocument {
   _id?: any;
-  id: string; // e.g. "USR-1001"
+  id: string;
   name: string;
   email: string;
   phone?: string;

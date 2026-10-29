@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import {
   LayoutDashboard,
@@ -24,10 +24,12 @@ import {
   Settings,
   Store,
   LogOut,
-  ChevronRight
+  ChevronRight,
+  ShieldCheck
 } from "lucide-react";
+import { UserRole } from "@/types/user";
 
-function SidebarLinks() {
+function SidebarLinks({ activeUser, userPermissions }: { activeUser: any; userPermissions: Record<string, any> }) {
   const pathname = usePathname();
   const [counts, setCounts] = useState<{
     products: number;
@@ -79,9 +81,10 @@ function SidebarLinks() {
     fetchStats();
   }, [pathname]);
 
-  const menuItems = [
-    { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+  const allMenuItems = [
+    { key: "dashboard", label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
     { 
+      key: "products",
       label: "Products", 
       href: "/admin/products", 
       icon: Package, 
@@ -89,6 +92,7 @@ function SidebarLinks() {
       badgeColor: "bg-blue-500/20 text-blue-300 border border-blue-500/30"
     },
     { 
+      key: "categories",
       label: "Categories", 
       href: "/admin/categories", 
       icon: Grid,
@@ -96,6 +100,7 @@ function SidebarLinks() {
       badgeColor: "bg-purple-500/20 text-purple-300 border border-purple-500/30"
     },
     { 
+      key: "inventory",
       label: "Inventory", 
       href: "/admin/inventory", 
       icon: Boxes, 
@@ -105,6 +110,7 @@ function SidebarLinks() {
         : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" 
     },
     { 
+      key: "barcode",
       label: "Barcode Entry", 
       href: "/admin/barcode", 
       icon: Barcode, 
@@ -112,6 +118,7 @@ function SidebarLinks() {
       badgeColor: "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-bold" 
     },
     { 
+      key: "warehouses",
       label: "Warehouses", 
       href: "/admin/warehouses", 
       icon: Building2, 
@@ -119,6 +126,7 @@ function SidebarLinks() {
       badgeColor: "bg-slate-800 text-slate-300 border border-slate-700/80"
     },
     { 
+      key: "purchases",
       label: "Purchases", 
       href: "/admin/purchases", 
       icon: ShoppingBag,
@@ -128,6 +136,7 @@ function SidebarLinks() {
         : "bg-slate-800 text-slate-400 border border-slate-700/80"
     },
     { 
+      key: "suppliers",
       label: "Suppliers", 
       href: "/admin/suppliers", 
       icon: Truck,
@@ -135,6 +144,7 @@ function SidebarLinks() {
       badgeColor: "bg-slate-800 text-slate-300 border border-slate-700/80"
     },
     { 
+      key: "orders",
       label: "Orders", 
       href: "/admin/orders", 
       icon: ShoppingCart, 
@@ -144,6 +154,7 @@ function SidebarLinks() {
         : "bg-slate-800 text-slate-300 border border-slate-700/80" 
     },
     { 
+      key: "returns",
       label: "Returns", 
       href: "/admin/returns", 
       icon: RotateCcw, 
@@ -153,6 +164,7 @@ function SidebarLinks() {
         : "bg-slate-800 text-slate-400 border border-slate-700/80" 
     },
     { 
+      key: "delivery",
       label: "Courier", 
       href: "/admin/delivery", 
       icon: Truck,
@@ -161,8 +173,9 @@ function SidebarLinks() {
         ? "bg-sky-500/25 text-sky-300 border border-sky-500/40 font-bold" 
         : "bg-slate-800 text-slate-400 border border-slate-700/80"
     },
-    { label: "Customers", href: "/admin/customers", icon: Users },
+    { key: "customers", label: "Customers", href: "/admin/customers", icon: Users },
     { 
+      key: "expenses",
       label: "Expenses", 
       href: "/admin/expenses", 
       icon: Receipt,
@@ -170,14 +183,16 @@ function SidebarLinks() {
       badgeColor: "bg-slate-800 text-slate-300 border border-slate-700/80"
     },
     { 
+      key: "coupons",
       label: "Coupons", 
       href: "/admin/coupons", 
       icon: Ticket,
       badge: counts.coupons > 0 ? String(counts.coupons) : "0",
       badgeColor: "bg-teal-500/20 text-teal-300 border border-teal-500/30 font-bold"
     },
-    { label: "Marketing", href: "/admin/marketing", icon: Megaphone },
+    { key: "marketing", label: "Marketing", href: "/admin/marketing", icon: Megaphone },
     { 
+      key: "reviews",
       label: "Reviews", 
       href: "/admin/reviews", 
       icon: Star, 
@@ -186,17 +201,36 @@ function SidebarLinks() {
         ? "bg-amber-500/25 text-amber-300 border border-amber-500/40 font-black" 
         : "bg-slate-800 text-slate-400 border border-slate-700/80" 
     },
-    { label: "Reports", href: "/admin/reports", icon: BarChart3 },
-    { label: "Users & Roles", href: "/admin/users-roles", icon: UserCheck },
-    { label: "Settings", href: "/admin/settings", icon: Settings },
+    { key: "reports", label: "Reports", href: "/admin/reports", icon: BarChart3 },
+    { key: "users-roles", label: "Users & Roles", href: "/admin/users-roles", icon: UserCheck },
+    { key: "settings", label: "Settings", href: "/admin/settings", icon: Settings },
   ];
+
+  // Dynamically filter menu items based on active user's permissions
+  const visibleMenuItems = allMenuItems.filter((item) => {
+    if (!activeUser) return true; // fallback
+    if (activeUser.role === "Super Admin") return true; // Super Admin sees all
+
+    // Check specific module permission
+    const modPerm = userPermissions[item.key];
+    if (modPerm !== undefined) {
+      return modPerm.view === true;
+    }
+
+    // Default: visible if not explicitly blocked
+    return true;
+  });
 
   return (
     <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-      <div className="px-3 py-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-        Management
+      <div className="px-3 py-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+        <span>Management</span>
+        <span className="text-[10px] text-slate-500 font-mono">
+          {visibleMenuItems.length} / {allMenuItems.length}
+        </span>
       </div>
-      {menuItems.map((item) => {
+
+      {visibleMenuItems.map((item) => {
         const Icon = item.icon;
         const isActive = pathname === item.href || (item.href !== "/admin/dashboard" && pathname.startsWith(item.href));
 
@@ -229,8 +263,60 @@ function SidebarLinks() {
 }
 
 export default function AdminSidebar() {
+  const router = useRouter();
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [rolePermissions, setRolePermissions] = useState<Record<string, any>>({});
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // Fetch logged in staff profile & permissions
+  const fetchAuthUser = async () => {
+    try {
+      const res = await fetch("/api/auth/me");
+      const data = await res.json();
+      if (data.success && data.user) {
+        setCurrentUser(data.user);
+
+        // Fetch permissions for this user's role
+        const rolesRes = await fetch("/api/roles");
+        const rolesData = await rolesRes.json();
+        if (rolesData.success && Array.isArray(rolesData.roles)) {
+          const matchedRole = rolesData.roles.find((r: any) => r.name === data.user.role);
+          if (matchedRole && matchedRole.permissions) {
+            setRolePermissions(matchedRole.permissions);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch active staff session:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchAuthUser();
+
+    const handleAuthChange = () => fetchAuthUser();
+    window.addEventListener("authChanged", handleAuthChange);
+    return () => window.removeEventListener("authChanged", handleAuthChange);
+  }, []);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("authChanged"));
+      }
+      router.push("/login");
+      router.refresh();
+    } catch (err) {
+      console.error("Logout error:", err);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
   return (
-    <aside className="w-64 bg-slate-900 text-slate-100 min-h-screen flex flex-col border-r border-slate-800 shadow-xl shrink-0 max-h-screen  sticky top-0">
+    <aside className="w-64 bg-slate-900 text-slate-100 min-h-screen flex flex-col border-r border-slate-800 shadow-xl shrink-0 max-h-screen sticky top-0">
       {/* Sidebar Header */}
       <div className="p-4 border-b border-slate-800 flex items-center justify-between">
         <Link href="/admin/dashboard" className="flex items-center gap-2 text-xl font-extrabold text-white">
@@ -242,10 +328,10 @@ export default function AdminSidebar() {
 
       {/* Navigation Links wrapped in Suspense */}
       <Suspense fallback={<div className="flex-1"></div>}>
-        <SidebarLinks />
+        <SidebarLinks activeUser={currentUser} userPermissions={rolePermissions} />
       </Suspense>
 
-      {/* Store Link & Admin Footer */}
+      {/* Store Link & Active Admin Profile Footer */}
       <div className="p-3 border-t border-slate-800 bg-slate-950/50 space-y-2">
         <Link
           href="/"
@@ -257,16 +343,33 @@ export default function AdminSidebar() {
 
         <div className="flex items-center gap-3 pt-2 px-1">
           <div className="avatar">
-            <div className="w-8 rounded-full ring ring-primary ring-offset-slate-900 ring-offset-1">
-              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Super Admin" />
+            <div className="w-8 h-8 rounded-full ring ring-primary ring-offset-slate-900 ring-offset-1 overflow-hidden">
+              <img 
+                src={currentUser?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"} 
+                alt={currentUser?.name || "Staff"} 
+              />
             </div>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-white truncate">Super Admin</p>
-            <p className="text-[10px] text-slate-400 truncate">admin@superdeal.com</p>
+            <p className="text-xs font-semibold text-white truncate">
+              {currentUser?.name || "Super Admin"}
+            </p>
+            <p className="text-[10px] text-emerald-400 font-bold truncate flex items-center gap-1">
+              <ShieldCheck className="w-3 h-3" />
+              {currentUser?.role || "Super Admin"}
+            </p>
           </div>
-          <button className="btn btn-ghost btn-xs btn-circle text-slate-400 hover:text-error">
-            <LogOut className="w-3.5 h-3.5" />
+          <button 
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="btn btn-ghost btn-xs btn-circle text-slate-400 hover:text-error hover:bg-error/10"
+            title="Log Out Session"
+          >
+            {isLoggingOut ? (
+              <span className="loading loading-spinner loading-xs"></span>
+            ) : (
+              <LogOut className="w-3.5 h-3.5" />
+            )}
           </button>
         </div>
       </div>

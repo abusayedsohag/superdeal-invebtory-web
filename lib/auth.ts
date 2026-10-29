@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
+import { cookies } from "next/headers";
 import { AuthJWTPayload } from "@/types/user";
 
 // JWT Secret Key setup
@@ -22,6 +23,9 @@ export async function comparePassword(plainText: string, hashed: string): Promis
   return bcrypt.compare(plainText, hashed);
 }
 
+// Alias for convenience
+export const verifyPassword = comparePassword;
+
 /**
  * Sign JWT token containing user session payload
  */
@@ -41,6 +45,20 @@ export async function verifyAuthToken(token: string): Promise<AuthJWTPayload | n
     const { payload } = await jwtVerify(token, JWT_SECRET_BYTES);
     return payload as unknown as AuthJWTPayload;
   } catch (error) {
+    return null;
+  }
+}
+
+/**
+ * Get active user session payload from server cookie
+ */
+export async function getSessionUser(): Promise<AuthJWTPayload | null> {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get(AUTH_COOKIE_NAME)?.value;
+    if (!token) return null;
+    return await verifyAuthToken(token);
+  } catch {
     return null;
   }
 }

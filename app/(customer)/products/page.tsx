@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { getStoredWishlist, toggleWishlistItem, WishlistItem } from "@/lib/wishlist-store";
 import { 
   Filter, 
   Search, 
@@ -78,8 +79,19 @@ export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [priceRange, setPriceRange] = useState(250);
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
-  const [wishlistItems, setWishlistItems] = useState<string[]>(["prod-1", "prod-3"]);
+  const [wishlistItems, setWishlistItems] = useState<string[]>([]);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  // Sync wishlist with central store
+  useEffect(() => {
+    const updateLocalWishlistIds = () => {
+      const items = getStoredWishlist();
+      setWishlistItems(items.map((i) => i.id));
+    };
+    updateLocalWishlistIds();
+    window.addEventListener("wishlistUpdated", updateLocalWishlistIds);
+    return () => window.removeEventListener("wishlistUpdated", updateLocalWishlistIds);
+  }, []);
 
   useEffect(() => {
     const fetchDbProducts = async () => {
@@ -112,13 +124,30 @@ export default function ProductsPage() {
     fetchDbProducts();
   }, []);
 
-  const toggleWishlist = (id: string, name: string) => {
-    if (wishlistItems.includes(id)) {
-      setWishlistItems(prev => prev.filter(item => item !== id));
-      showToast(`Removed "${name}" from your wishlist.`);
+  const toggleWishlist = (product: {
+    id: string;
+    name: string;
+    price: number;
+    originalPrice?: number;
+    rating?: number;
+    reviews?: number;
+    image: string;
+    inStock?: boolean;
+  }) => {
+    const isAdded = toggleWishlistItem({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      originalPrice: product.originalPrice,
+      rating: product.rating,
+      reviews: product.reviews,
+      image: product.image,
+      inStock: product.inStock,
+    });
+    if (isAdded) {
+      showToast(`❤️ Added "${product.name}" to your wishlist!`);
     } else {
-      setWishlistItems(prev => [...prev, id]);
-      showToast(`❤️ Added "${name}" to your wishlist!`);
+      showToast(`Removed "${product.name}" from your wishlist.`);
     }
   };
 
@@ -255,7 +284,7 @@ export default function ProductsPage() {
                 <figure className="relative h-48 bg-base-200">
                   <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                   <button 
-                    onClick={() => toggleWishlist(product.id, product.name)}
+                    onClick={() => toggleWishlist(product)}
                     className="btn btn-circle btn-sm bg-base-100/90 hover:bg-base-100 border-none absolute top-3 right-3 text-rose-500 shadow-sm transition-all"
                     title={wishlistItems.includes(product.id) ? "Remove from wishlist" : "Add to wishlist"}
                   >

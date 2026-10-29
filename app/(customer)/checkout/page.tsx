@@ -27,13 +27,34 @@ export default function CheckoutPage() {
   const router = useRouter();
 
   // Customer Form State
-  const [customerName, setCustomerName] = useState("Abu Sayed");
-  const [phone, setPhone] = useState("+880 1711 223344");
-  const [email, setEmail] = useState("sayed@example.com");
-  const [address, setAddress] = useState("House 42, Road 11, Block D");
+  const [customerName, setCustomerName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [address, setAddress] = useState("");
   const [district, setDistrict] = useState("Dhaka");
   const [upazila, setUpazila] = useState("Banani");
   const [deliveryInstruction, setDeliveryInstruction] = useState("Call before delivery / Leave at security desk");
+
+  // Fetch logged in customer session and auto-fill form
+  useEffect(() => {
+    const fetchSession = async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+        const data = await res.json();
+        if (data.authenticated && data.user) {
+          setCustomerName(data.user.name || "");
+          setEmail(data.user.email || "");
+          if (data.user.phone) setPhone(data.user.phone);
+          if (data.user.address) setAddress(data.user.address);
+          if (data.user.district) setDistrict(data.user.district);
+          if (data.user.upazila) setUpazila(data.user.upazila);
+        }
+      } catch (err) {
+        console.error("Failed to fetch customer profile in checkout:", err);
+      }
+    };
+    fetchSession();
+  }, []);
 
   // Gateway Tab & Selected Method
   const [activeGatewayTab, setActiveGatewayTab] = useState<"mobile" | "cards" | "netbanking" | "cod">("mobile");

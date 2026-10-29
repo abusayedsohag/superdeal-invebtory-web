@@ -1,6 +1,7 @@
 import { getDb } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
+import { getSessionUser } from "@/lib/auth";
 
 export interface OrderItem {
   id: string;
@@ -154,6 +155,10 @@ export async function GET(request: Request) {
     const phone = searchParams.get("phone");
     const email = searchParams.get("email");
     const limit = parseInt(searchParams.get("limit") || "100", 10);
+    const scope = searchParams.get("scope"); // "my" for customer sandbox
+
+    // Session check for customer sandbox scoping
+    const session = await getSessionUser();
 
     // If fetching single order by id
     if (id) {
@@ -170,6 +175,15 @@ export async function GET(request: Request) {
         return NextResponse.json({ success: false, message: "Order not found" }, { status: 404 });
       }
 
+      // Customer privacy check: customers can only view their own orders
+      if (session && session.role === "Customer") {
+        const orderEmail = (order.email || "").toLowerCase();
+        const sessionEmail = session.email.toLowerCase();
+        if (orderEmail && orderEmail !== sessionEmail) {
+          return NextResponse.json({ success: false, message: "Unauthorized to view this order" }, { status: 403 });
+        }
+      }
+
       return NextResponse.json({
         success: true,
         order: { ...order, _id: order._id.toString() }
@@ -177,14 +191,19 @@ export async function GET(request: Request) {
     }
 
     let filter: any = {};
-    if (status && status !== "all") {
-      filter.orderStatus = status;
-    }
-    if (phone) {
-      filter.phone = { $regex: phone.trim(), $options: "i" };
-    }
-    if (email) {
-      filter.email = { $regex: email.trim(), $options: "i" };
+
+    // Customer sandbox isolation: if requested by Customer or scope=my, strictly filter by session user's email
+    if ((session && session.role === "Customer") || scope === "my") {
+      if (session) {
+        filter.email = { $regex: `^${session.email.trim()}$`, $options: "i" };
+      }
+    } else {
+      if (email) {
+        filter.email = { $regex: email.trim(), $options: "i" };
+      }
+      if (phone) {
+        filter.phone = { $regex: phone.trim(), $options: "i" };
+      }
     }
     if (search && search.trim()) {
       const q = search.trim();
